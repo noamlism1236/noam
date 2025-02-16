@@ -6,36 +6,93 @@
     <title>חיפוש זמני שבת לפי מיקום</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap');
+
         body {
-            font-family: 'Noto Sans Hebrew', sans-serif;
-            background-color: #e8f5e9;
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f1f8e9;
             text-align: center;
-            padding: 20px;
-            color: #1b5e20;
+            padding: 40px;
+            margin: 0;
+            color: #2c6b2f;
+            background-image: url('https://source.unsplash.com/1600x900/?nature,forest'); 
+            background-size: cover;
+            background-position: center;
         }
+
         h1 {
-            font-size: 36px;
+            font-size: 40px;
             font-family: 'Noto Sans Hebrew', sans-serif;
             font-weight: 700;
+            color: #fff;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
+
         button {
             background-color: #4caf50;
             color: white;
-            font-size: 20px;
-            padding: 15px 30px;
+            font-size: 24px;
+            padding: 20px 40px;
             border: none;
-            border-radius: 10px;
+            border-radius: 25px;
             cursor: pointer;
             margin-top: 20px;
-            font-family: 'Noto Sans Hebrew', sans-serif;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            font-family: 'Quicksand', sans-serif;
         }
+
         button:hover {
             background-color: #388e3c;
+            transform: scale(1.1);
         }
+
         p {
-            font-size: 24px;
-            margin-top: 20px;
-            font-family: 'Noto Sans Hebrew', sans-serif;
+            font-size: 26px;
+            font-weight: 600;
+            margin-top: 30px;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            line-height: 1.6;
+        }
+
+        .result-box {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-box h2 {
+            font-size: 32px;
+            color: #388e3c;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .result-box p {
+            font-size: 22px;
+            color: #1b5e20;
+        }
+
+        @media (max-width: 600px) {
+            button {
+                width: 100%;
+                font-size: 20px;
+                padding: 15px 30px;
+            }
+
+            p {
+                font-size: 22px;
+            }
+
+            .result-box {
+                padding: 20px;
+            }
         }
     </style>
     <script>
@@ -99,15 +156,19 @@
             });
 
             const times = shabbatTimes[closestCity];
-            document.getElementById("result").innerHTML = `העיר הקרובה ביותר: ${closestCity}<br>
-                זמני כניסת שבת: ${times["כניסה"]}<br>
-                זמני יציאת שבת: ${times["יציאה"]}`;
+            document.getElementById("result").innerHTML = `
+                <div class="result-box">
+                    <h2>העיר הקרובה ביותר: ${closestCity}</h2>
+                    <p><strong>זמני כניסת שבת:</strong> ${times["כניסה"]}</p>
+                    <p><strong>זמני יציאת שבת:</strong> ${times["יציאה"]}</p>
+                </div>
+            `;
         }
     </script>
 </head>
 <body>
     <h1>חיפוש זמני שבת</h1>
     <button onclick="getUserLocation()">מצא זמני שבת לפי מיקום</button>
-    <p id="result"></p>
+    <div id="result"></div>
 </body>
 </html>
