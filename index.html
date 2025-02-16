@@ -128,7 +128,11 @@
                 navigator.geolocation.getCurrentPosition(position => {
                     findClosestCity(position.coords.latitude, position.coords.longitude);
                 }, error => {
-                    document.getElementById("result").innerText = "לא ניתן לאתר את מיקומך. נא לאפשר הרשאות מיקום.";
+                    if (error.code === error.PERMISSION_DENIED) {
+                        document.getElementById("result").innerText = "נא לאפשר הרשאת מיקום בדפדפן.";
+                    } else {
+                        document.getElementById("result").innerText = "לא ניתן לאתר את מיקומך.";
+                    }
                 });
             } else {
                 document.getElementById("result").innerText = "הדפדפן שלך אינו תומך במיקום גיאוגרפי.";
