@@ -5,39 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>זמני שבת לפי מיקום</title>
     <style>
-        body { font-family: Arial, sans-serif; direction: rtl; text-align: center; background-color: #f5f5dc; padding: 20px; }
-        #result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; display: inline-block; background-color: white; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); }
-        button { margin-top: 15px; padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 20px;
+            cursor: pointer;
+        }
+        #result {
+            font-size: 18px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <h2>מצא את זמני השבת הקרובים אליך</h2>
-    <button onclick="requestLocation()">מצא את העיר הקרובה</button>
-    <div id="result">נא לחץ על הכפתור כדי לאתר את מיקומך.</div>
+    <h1>זמני שבת לפי מיקום</h1>
+    <button onclick="requestLocation()">מצא את זמני השבת</button>
+    <div id="result">לחץ על הכפתור כדי לאתר את זמני השבת בעיר הקרובה ביותר.</div>
 
     <script>
         const shabbatTimes = {
             "ירושלים": { lat: 31.7683, lon: 35.2137, כניסה: "16:55", יציאה: "18:07" },
             "נתניה": { lat: 32.3215, lon: 34.8532, כניסה: "17:10", יציאה: "18:09" },
             "תל אביב": { lat: 32.0853, lon: 34.7818, כניסה: "17:11", יציאה: "18:09" },
+            "חדרה": { lat: 32.4416, lon: 34.9197, כניסה: "17:02", יציאה: "18:08" },
             "חיפה": { lat: 32.7940, lon: 34.9896, כניסה: "17:04", יציאה: "18:08" },
-            "באר שבע": { lat: 31.2518, lon: 34.7913, כניסה: "17:05", יציאה: "18:09" },
-            "אשקלון": { lat: 31.6692, lon: 34.5715, כניסה: "17:04", יציאה: "18:10" },
-            "רחובות": { lat: 31.8947, lon: 34.8113, כניסה: "17:10", יציאה: "18:09" },
-            "אילת": { lat: 29.5581, lon: 34.9482, כניסה: "17:06", יציאה: "18:10" },
-            "אשדוד": { lat: 31.8044, lon: 34.6553, כניסה: "17:12", יציאה: "18:10" },
-            "מודיעין": { lat: 31.8983, lon: 35.0104, כניסה: "17:04", יציאה: "18:08" },
-            "בית שמש": { lat: 31.7492, lon: 34.9887, כניסה: "16:54", יציאה: "18:08" },
-            "צפת": { lat: 32.9651, lon: 35.4987, כניסה: "16:58", יציאה: "18:05" },
-            "כפר סבא": { lat: 32.1751, lon: 34.9066, כניסה: "17:11", יציאה: "18:08" },
-            "אופקים": { lat: 31.3142, lon: 34.6202, כניסה: "17:05", יציאה: "18:10" },
-            "ראשון לציון": { lat: 31.9706, lon: 34.7925, כניסה: "17:11", יציאה: "18:09" },
-            "דימונה": { lat: 31.0700, lon: 35.0331, כניסה: "17:06", יציאה: "18:09" },
-            "עכו": { lat: 32.9273, lon: 35.0841, כניסה: "17:00", יציאה: "18:07" },
-            "בית שאן": { lat: 32.4973, lon: 35.4962, כניסה: "16:58", יציאה: "18:06" },
-            "בני ברק": { lat: 32.0805, lon: 34.8338, כניסה: "17:10", יציאה: "18:10" },
-            "לוד": { lat: 31.9510, lon: 34.8881, כניסה: "17:01", יציאה: "18:09" }
+            "טבריה": { lat: 32.7959, lon: 35.5287, כניסה: "16:58", יציאה: "18:06" },
+            "באר שבע": { lat: 31.252973, lon: 34.791462, כניסה: "17:05", יציאה: "18:09" },
+            "אשקלון": { lat: 31.669, lon: 34.5715, כניסה: "17:04", יציאה: "18:10" },
+            "אשדוד": { lat: 31.8014, lon: 34.6431, כניסה: "17:12", יציאה: "18:10" },
+            "מודיעין": { lat: 31.898, lon: 35.006, כניסה: "17:04", יציאה: "18:08" },
+            "בית שמש": { lat: 31.749, lon: 34.9896, כניסה: "16:54", יציאה: "18:08" },
+            "צפת": { lat: 32.965, lon: 35.4984, כניסה: "16:58", יציאה: "18:05" },
+            "אילת": { lat: 29.5581, lon: 34.9482, כניסה: "17:06", יציאה: "18:10" }
         };
 
         function requestLocation() {
@@ -48,67 +53,64 @@
                 return;
             }
 
-            navigator.permissions.query({ name: "geolocation" }).then(permission => {
-                if (permission.state === "denied") {
-                    alert("נא לאפשר גישה למיקום דרך הגדרות הדפדפן.");
-                    document.getElementById("result").innerText = "הרשאת מיקום חסומה.";
-                    return;
-                }
-
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        console.log("המיקום שלך:", position.coords.latitude, position.coords.longitude);
-                        findClosestCity(position.coords.latitude, position.coords.longitude);
-                    },
-                    error => {
-                        console.error("שגיאה באיתור מיקום:", error);
-                        if (error.code === error.PERMISSION_DENIED) {
-                            alert("נא לאפשר הרשאת מיקום.");
-                            document.getElementById("result").innerText = "הגישה למיקום נדחתה.";
-                        } else {
-                            document.getElementById("result").innerText = "לא ניתן לאתר את מיקומך.";
-                        }
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
-            });
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    console.log("המיקום שלך:", position.coords.latitude, position.coords.longitude);
+                    findClosestCity(position.coords.latitude, position.coords.longitude);
+                },
+                error => {
+                    console.error("שגיאה באיתור מיקום:", error);
+                    if (error.code === error.PERMISSION_DENIED) {
+                        alert("נראה שסירבת להרשאת מיקום. עבור להגדרות הדפדפן ואפשר הרשאה.");
+                        document.getElementById("result").innerText = "הגישה למיקום נדחתה.";
+                    } else {
+                        document.getElementById("result").innerText = "לא ניתן לאתר את מיקומך.";
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
         }
 
         function findClosestCity(userLat, userLon) {
-            let closestCity = "";
+            let closestCity = null;
             let minDistance = Infinity;
 
-            function haversine(lat1, lon1, lat2, lon2) {
-                const R = 6371;
-                const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                          Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-            }
-
             Object.keys(shabbatTimes).forEach(city => {
-                const cityData = shabbatTimes[city];
-                const distance = haversine(userLat, userLon, cityData.lat, cityData.lon);
-
+                let cityData = shabbatTimes[city];
+                let distance = haversine(userLat, userLon, cityData.lat, cityData.lon);
                 if (distance < minDistance) {
                     minDistance = distance;
                     closestCity = city;
                 }
             });
 
-            if (!closestCity || minDistance === Infinity) {
-                document.getElementById("result").innerText = "לא נמצאה עיר קרובה.";
+            if (!closestCity) {
+                document.getElementById("result").innerText = "לא נמצאה עיר קרובה. אנא נסה שוב.";
                 return;
             }
 
             const times = shabbatTimes[closestCity];
             document.getElementById("result").innerHTML = `
-                העיר הקרובה ביותר: ${closestCity}<br>
-                זמני כניסת שבת: ${times.כניסה}<br>
-                זמני יציאת שבת: ${times.יציאה}
+                <strong>העיר הקרובה ביותר:</strong> ${closestCity} <br>
+                <strong>כניסת שבת:</strong> ${times.כניסה} <br>
+                <strong>יציאת שבת:</strong> ${times.יציאה}
             `;
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371; // רדיוס כדור הארץ בק"מ
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function toRad(deg) {
+            return deg * (Math.PI / 180);
         }
     </script>
 
