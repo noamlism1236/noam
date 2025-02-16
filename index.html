@@ -123,6 +123,19 @@
             "ערד": {"כניסה": "17:05", "יציאה": "18:08", "lat": 31.2677, "lon": 35.2047}
         };
 
+        // פונקציה לחישוב המרחק על פי נוסחת ה-Haversine
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371; // רדיוס כדור הארץ בקילומטרים
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // המרחק בקילומטרים
+            return distance;
+        }
+
         function getUserLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -145,10 +158,7 @@
 
             Object.keys(shabbatTimes).forEach(city => {
                 let cityData = shabbatTimes[city];
-                let distance = Math.sqrt(
-                    Math.pow(userLat - cityData.lat, 2) +
-                    Math.pow(userLon - cityData.lon, 2)
-                );
+                let distance = haversine(userLat, userLon, cityData.lat, cityData.lon);
                 if (distance < minDistance) {
                     minDistance = distance;
                     closestCity = city;
