@@ -6,50 +6,24 @@
     <title>זמני שבת</title>
     <script>
         // רשימת הערים עם זמני השבת
-        const cities = [
-            {name: "ירושלים", friday: "16:55", saturday: "18:07"},
-            {name: "נתניה", friday: "17:10", saturday: "18:09"},
-            {name: "תל אביב", friday: "17:11", saturday: "18:09"},
-            {name: "חדרה", friday: "17:02", saturday: "18:08"},
-            {name: "חיפה", friday: "17:04", saturday: "18:08"},
-            {name: "טבריה", friday: "16:58", saturday: "18:06"},
-            {name: "באר שבע", friday: "17:05", saturday: "18:09"},
-            {name: "אשקלון", friday: "17:04", saturday: "18:10"},
-            {name: "רחובות", friday: "17:10", saturday: "18:09"},
-            {name: "אילת", friday: "17:06", saturday: "18:10"},
-            {name: "אשדוד", friday: "17:12", saturday: "18:10"},
-            {name: "מודיעין", friday: "17:04", saturday: "18:08"},
-            {name: "עפולה", friday: "17:02", saturday: "18:07"},
-            {name: "פתח תקווה", friday: "17:10", saturday: "18:08"},
-            {name: "נהריה", friday: "17:00", saturday: "18:07"},
-            {name: "קרית גת", friday: "17:03", saturday: "18:09"},
-            {name: "בית שמש", friday: "16:54", saturday: "18:08"},
-            {name: "צפת", friday: "16:58", saturday: "18:05"},
-            {name: "כפר סבא", friday: "17:11", saturday: "18:08"},
-            {name: "אופקים", friday: "17:05", saturday: "18:10"},
-            {name: "חולון", friday: "17:11", saturday: "18:09"},
-            {name: "ראשון לציון", friday: "17:11", saturday: "18:09"},
-            {name: "דימונה", friday: "17:06", saturday: "18:09"},
-            {name: "עכו", friday: "17:00", saturday: "18:07"},
-            {name: "רמלה", friday: "17:10", saturday: "18:09"},
-            {name: "בית שאן", friday: "16:58", saturday: "18:06"},
-            {name: "רעננה", friday: "17:10", saturday: "18:08"},
-            {name: "ערד", friday: "17:05", saturday: "18:08"},
-            {name: "בני ברק", friday: "17:10", saturday: "18:10"},
-            {name: "לוד", friday: "17:01", saturday: "18:09"},
-            {name: "מודיעין עילית", friday: "17:01", saturday: "18:09"},
-            {name: "ראש העין", friday: "17:01", saturday: "18:09"},
-            {name: "כרמיאל", friday: "16:59", saturday: "18:07"},
-            {name: "נתיבות", friday: "17:03", saturday: "18:11"},
-            {name: "מעלה אדומים", friday: "17:00", saturday: "18:08"},
-            {name: "שדרות", friday: "17:03", saturday: "18:11"},
-            {name: "גבעת שמואל", friday: "17:01", saturday: "18:09"},
-            {name: "קריית שמונה", friday: "16:57", saturday: "18:06"},
-            {name: "רמת גן", friday: "17:10", saturday: "18:10"},
-            {name: "יבנה", friday: "17:02", saturday: "18:10"},
-            {name: "בת ים", friday: "17:02", saturday: "18:10"},
-            {name: "הרצליה", friday: "17:01", saturday: "18:10"}
-        ];
+        const shabbatTimes = {
+            ירושלים: { lat: 31.7683, lon: 35.2137, כניסה: "16:55", יציאה: "18:07" },
+            נתניה: { lat: 32.321, lon: 34.853, כניסה: "17:10", יציאה: "18:09" },
+            תל אביב: { lat: 32.0853, lon: 34.7818, כניסה: "17:11", יציאה: "18:09" },
+            // הוסף ערים נוספות כאן
+        };
+
+        // פונקציה לחישוב מרחק בין שתי נקודות
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371; // רדיוס כדור הארץ בקילומטרים
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // מרחק בקילומטרים
+        }
 
         // פונקציה לבקש את המיקום של המשתמש
         function getUserLocation() {
@@ -57,36 +31,51 @@
                 navigator.geolocation.getCurrentPosition(function(position) {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
-                    findNearestCity(lat, lon);
+                    findClosestCity(lat, lon);
+                }, function(error) {
+                    if (error.code === error.PERMISSION_DENIED) {
+                        document.getElementById("result").innerText = "נא לאפשר הרשאת מיקום בדפדפן.";
+                    } else {
+                        document.getElementById("result").innerText = "לא ניתן לאתר את מיקומך.";
+                    }
                 });
             } else {
-                alert("הדפדפן שלך לא תומך במיקום גיאוגרפי");
+                document.getElementById("result").innerText = "הדפדפן שלך אינו תומך במיקום גיאוגרפי.";
             }
         }
 
-        // פונקציה לאתר את העיר הקרובה ביותר
-        function findNearestCity(lat, lon) {
-            // כאן יכנס קוד להתחשב במיקום העיר הקרובה ביותר (באמצעות API או חישוב מרחק)
-            // לדוגמה, נבחר את ירושלים לצורך הדגמה
+        // פונקציה למצוא את העיר הקרובה ביותר
+        function findClosestCity(userLat, userLon) {
+            let closestCity = "";
+            let minDistance = Infinity;
+            
+            Object.keys(shabbatTimes).forEach(city => {
+                let cityData = shabbatTimes[city];
+                let distance = haversine(userLat, userLon, cityData.lat, cityData.lon);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestCity = city;
+                }
+            });
+            
+            if (!closestCity) {
+                document.getElementById("result").innerText = "לא נמצאה עיר קרובה.";
+                return;
+            }
 
-            const nearestCity = "ירושלים"; // כאן צריך להוסיף חישוב מרחקים
-
-            // מציאת זמני השבת של העיר הקרובה
-            const city = cities.find(c => c.name === nearestCity);
-            document.getElementById("city-name").textContent = nearestCity;
-            document.getElementById("friday-time").textContent = `כניסת שבת: ${city.friday}`;
-            document.getElementById("saturday-time").textContent = `יציאת שבת: ${city.saturday}`;
+            const times = shabbatTimes[closestCity];
+            document.getElementById("result").innerHTML = `
+                העיר הקרובה ביותר: ${closestCity}<br>
+                זמני כניסת שבת: ${times.כניסה}<br>
+                זמני יציאת שבת: ${times.יציאה}
+            `;
         }
     </script>
 </head>
 <body>
     <h1>זמני שבת</h1>
-    <p>נמצא את העיר הקרובה אליך...</p>
     <button onclick="getUserLocation()">מצא את מיקום שלי</button>
-
-    <h2>העיר הקרובה ביותר אליך:</h2>
-    <p id="city-name"></p>
-    <p id="friday-time"></p>
-    <p id="saturday-time"></p>
+    <div id="result"></div>
 </body>
 </html>
