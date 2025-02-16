@@ -4,6 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>חיפוש זמני שבת לפי מיקום</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew&display=swap');
+        body {
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            background-color: #e8f5e9;
+            text-align: center;
+            padding: 20px;
+            color: #1b5e20;
+        }
+        h1 {
+            font-size: 32px;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            font-size: 20px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #388e3c;
+        }
+        p {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
     <script>
         const shabbatTimes = {
             "ירושלים": {"כניסה": "16:55", "יציאה": "18:07", "lat": 31.7683, "lon": 35.2137},
