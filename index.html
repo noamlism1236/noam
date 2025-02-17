@@ -18,7 +18,7 @@
         
         function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showShabbatTimes, showError);
+                navigator.geolocation.getCurrentPosition(showShabbatTimes, showError, {enableHighAccuracy: true, timeout: 10000, maximumAge: 0});
             } else {
                 document.getElementById("shabbat-times").innerHTML = "מיקום לא נתמך בדפדפן זה";
             }
@@ -50,7 +50,22 @@
         }
         
         function showError(error) {
-            document.getElementById("shabbat-times").innerHTML = "לא ניתן לאתר את המיקום";
+            let message = "לא ניתן לאתר את המיקום";
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = "גישה למיקום נדחתה. אנא אפשר גישה בהגדרות הדפדפן";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = "מידע על המיקום אינו זמין";
+                    break;
+                case error.TIMEOUT:
+                    message = "בקשת המיקום לקחה יותר מדי זמן";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    message = "שגיאה לא ידועה התרחשה";
+                    break;
+            }
+            document.getElementById("shabbat-times").innerHTML = message;
         }
     </script>
 </head>
