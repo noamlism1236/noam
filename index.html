@@ -43,7 +43,7 @@
             
             if (closestCity) {
                 document.getElementById("shabbat-times").innerHTML =
-                    `<h2>זמני שבת ב${closestCity}</h2>
+                    `<h2>זמני שבת ב${closestCity.replace('-', ' ')}</h2>
                     <p>כניסת שבת: ${shabbatTimes[closestCity].entry}</p>
                     <p>יציאת שבת: ${shabbatTimes[closestCity].exit}</p>`;
             }
