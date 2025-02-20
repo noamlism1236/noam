@@ -4,6 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>זמני שבת</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        #shabbat-times {
+            margin-top: 20px;
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 10px;
+            font-size: 18px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 300px;
+        }
+
+        .search-box button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 10px;
+            background-color: #FF5722;
+            font-weight: 700;
+        }
+
+    </style>
     <script>
         const shabbatTimes = {
             'ירושלים': {entry: "16:55", exit: "18:07", lat: 31.7683, lon: 35.2137},
@@ -70,7 +147,17 @@
     </script>
 </head>
 <body onload="getLocation()">
-    <h1>זמני שבת לפי מיקום</h1>
+    <header>
+        <h1>זמני שבת לפי מיקום</h1>
+    </header>
+
+    <div class="container">
+        <div class="search-box">
+            <input type="text" id="city-search" placeholder="חפש עיר...">
+            <button onclick="alert('החיפוש אינו פעיל כרגע')">🔍</button>
+        </div>
+    </div>
+
     <div id="shabbat-times">טוען...</div>
 </body>
 </html>
