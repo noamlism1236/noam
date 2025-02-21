@@ -51,40 +51,44 @@
         }
     </style>
     <script>
-        const shabbatTimes = {
-            'ירושלים': {entry: "16:55", exit: "18:07"},
-            'תל אביב': {entry: "17:11", exit: "18:09"},
-            'חיפה': {entry: "17:04", exit: "18:08"},
-            'באר שבע': {entry: "17:05", exit: "18:09"},
-            'אשדוד': {entry: "17:12", exit: "18:10"},
-            'נתניה': {entry: "17:10", exit: "18:09"},
-            'מודיעין': {entry: "17:04", exit: "18:08"},
-            'אילת': {entry: "17:06", exit: "18:10"}
-        };
-        
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showShabbatTimes, showError);
-            } else {
-                document.getElementById("shabbat-times").innerHTML = "מיקום לא נתמך בדפדפן זה";
+        document.addEventListener("DOMContentLoaded", function() {
+            const shabbatTimes = {
+                'ירושלים': {entry: "16:55", exit: "18:07"},
+                'תל אביב': {entry: "17:11", exit: "18:09"},
+                'חיפה': {entry: "17:04", exit: "18:08"},
+                'באר שבע': {entry: "17:05", exit: "18:09"},
+                'אשדוד': {entry: "17:12", exit: "18:10"},
+                'נתניה': {entry: "17:10", exit: "18:09"},
+                'מודיעין': {entry: "17:04", exit: "18:08"},
+                'אילת': {entry: "17:06", exit: "18:10"}
+            };
+            
+            function getLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showShabbatTimes, showError);
+                } else {
+                    document.getElementById("shabbat-times").innerHTML = "מיקום לא נתמך בדפדפן זה";
+                }
             }
-        }
-        
-        function showShabbatTimes(position) {
-            let closestCity = "ירושלים";
-            document.getElementById("shabbat-times").innerHTML = `
-                <h2>זמני שבת ב${closestCity}</h2>
-                <p>כניסת שבת: ${shabbatTimes[closestCity].entry}</p>
-                <p>יציאת שבת: ${shabbatTimes[closestCity].exit}</p>
-            `;
-        }
-        
-        function showError(error) {
-            document.getElementById("shabbat-times").innerHTML = "לא ניתן לאתר את המיקום";
-        }
+            
+            function showShabbatTimes(position) {
+                let closestCity = "ירושלים";
+                document.getElementById("shabbat-times").innerHTML = `
+                    <h2>זמני שבת ב${closestCity}</h2>
+                    <p>כניסת שבת: ${shabbatTimes[closestCity].entry}</p>
+                    <p>יציאת שבת: ${shabbatTimes[closestCity].exit}</p>
+                `;
+            }
+            
+            function showError(error) {
+                document.getElementById("shabbat-times").innerHTML = "לא ניתן לאתר את המיקום";
+            }
+            
+            getLocation();
+        });
     </script>
 </head>
-<body onload="getLocation()">
+<body>
     <header>זמני שבת לפי מיקום</header>
     <div id="shabbat-times">טוען...</div>
 </body>
