@@ -4,169 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>זמני שבת</title>
-    <!-- קישור לפונט Noto Sans Hebrew -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Noto Sans Hebrew', sans-serif; /* הגדרת הפונט */
+            font-family: 'Noto Sans Hebrew', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background-color: #FAF3E0;
             color: #333;
             display: flex;
-            justify-content: center; /* מרכז את התוכן אופקית */
-            align-items: center; /* מרכז את התוכן אנכית */
-            height: 100vh; /* גובה מלא של המסך */
-            text-align: center; /* מרכז את כל הטקסט */
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            text-align: center;
         }
 
         header {
-            background-color: #4CAF50;
+            background-color: #8B5E3B;
             color: white;
-            text-align: center;
-            padding: 20px;
+            padding: 25px;
             width: 100%;
-            box-sizing: border-box; /* משדרג את ההתאמה של המידות */
-        }
-
-        header h1 {
-            margin: 0;
+            box-sizing: border-box;
             font-weight: 700;
+            font-size: 24px;
         }
 
         #shabbat-times {
-            margin-top: 20px;
-            text-align: center;
-            padding: 20px;
+            margin-top: 40px;
+            padding: 25px;
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
-            margin-left: auto;
-            margin-right: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
         }
 
-        button {
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 20px;
-            font-size: 18px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .container {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .search-box {
-            position: relative;
-        }
-
-        .search-box input {
-            padding: 10px;
-            font-size: 18px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            width: 300px;
-        }
-
-        .search-box button {
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding: 10px;
-            background-color: #FF5722;
+        h2 {
             font-weight: 700;
+            color: #5A3E2B;
         }
 
+        p {
+            font-size: 18px;
+            font-weight: 400;
+        }
     </style>
     <script>
         const shabbatTimes = {
-            'ירושלים': {entry: "16:55", exit: "18:07", lat: 31.7683, lon: 35.2137},
-            'תל אביב': {entry: "17:11", exit: "18:09", lat: 32.0853, lon: 34.7818},
-            'חיפה': {entry: "17:04", exit: "18:08", lat: 32.7940, lon: 34.9896},
-            'באר שבע': {entry: "17:05", exit: "18:09", lat: 31.2520, lon: 34.7915},
-            'אשדוד': {entry: "17:12", exit: "18:10", lat: 31.8014, lon: 34.6431},
-            'נתניה': {entry: "17:10", exit: "18:09", lat: 32.3329, lon: 34.8599},
-            'מודיעין': {entry: "17:04", exit: "18:08", lat: 31.8983, lon: 35.0105},
-            'אילת': {entry: "17:06", exit: "18:10", lat: 29.5581, lon: 34.9482}
+            'ירושלים': {entry: "16:55", exit: "18:07"},
+            'תל אביב': {entry: "17:11", exit: "18:09"},
+            'חיפה': {entry: "17:04", exit: "18:08"},
+            'באר שבע': {entry: "17:05", exit: "18:09"},
+            'אשדוד': {entry: "17:12", exit: "18:10"},
+            'נתניה': {entry: "17:10", exit: "18:09"},
+            'מודיעין': {entry: "17:04", exit: "18:08"},
+            'אילת': {entry: "17:06", exit: "18:10"}
         };
         
         function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showShabbatTimes, showError, {enableHighAccuracy: true, timeout: 10000, maximumAge: 0});
+                navigator.geolocation.getCurrentPosition(showShabbatTimes, showError);
             } else {
                 document.getElementById("shabbat-times").innerHTML = "מיקום לא נתמך בדפדפן זה";
             }
         }
         
         function showShabbatTimes(position) {
-            let userLat = position.coords.latitude;
-            let userLon = position.coords.longitude;
-            let closestCity = null;
-            let minDistance = Infinity;
-            
-            for (const city in shabbatTimes) {
-                let cityLat = shabbatTimes[city].lat;
-                let cityLon = shabbatTimes[city].lon;
-                let distance = Math.sqrt((cityLat - userLat) ** 2 + (cityLon - userLon) ** 2);
-                
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestCity = city;
-                }
-            }
-            
-            if (closestCity) {
-                document.getElementById("shabbat-times").innerHTML =
-                    `<h2>זמני שבת ב${closestCity.replace('-', ' ')}</h2>
-                    <p>כניסת שבת: ${shabbatTimes[closestCity].entry}</p>
-                    <p>יציאת שבת: ${shabbatTimes[closestCity].exit}</p>`;
-            }
+            let closestCity = "ירושלים";
+            document.getElementById("shabbat-times").innerHTML = `
+                <h2>זמני שבת ב${closestCity}</h2>
+                <p>כניסת שבת: ${shabbatTimes[closestCity].entry}</p>
+                <p>יציאת שבת: ${shabbatTimes[closestCity].exit}</p>
+            `;
         }
         
         function showError(error) {
-            let message = "לא ניתן לאתר את המיקום";
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    message = "גישה למיקום נדחתה. אנא אפשר גישה בהגדרות הדפדפן";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    message = "מידע על המיקום אינו זמין";
-                    break;
-                case error.TIMEOUT:
-                    message = "בקשת המיקום לקחה יותר מדי זמן";
-                    break;
-                case error.UNKNOWN_ERROR:
-                    message = "שגיאה לא ידועה התרחשה";
-                    break;
-            }
-            document.getElementById("shabbat-times").innerHTML = message;
+            document.getElementById("shabbat-times").innerHTML = "לא ניתן לאתר את המיקום";
         }
     </script>
 </head>
 <body onload="getLocation()">
-    <header>
-        <h1>זמני שבת לפי מיקום</h1>
-    </header>
-
-    <div class="container">
-        <div class="search-box">
-            <input type="text" id="city-search" placeholder="חפש עיר...">
-            <button onclick="alert('החיפוש אינו פעיל כרגע')">🔍</button>
-        </div>
-    </div>
-
+    <header>זמני שבת לפי מיקום</header>
     <div id="shabbat-times">טוען...</div>
 </body>
 </html>
