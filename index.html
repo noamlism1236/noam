@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>זמני שבת</title>
-    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=David+Libre:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Frank Ruhl Libre', sans-serif;
+            font-family: 'David Libre', serif;
             margin: 0;
             padding: 0;
-            background-color: #FFFFFF;
+            background-color: #FAF3E0;
             color: #333;
             display: flex;
             flex-direction: column;
@@ -21,7 +21,7 @@
         }
 
         header {
-            background-color: #2F4F4F; /* ירוק כהה */
+            background-color: #8B5E3B;
             color: white;
             padding: 30px;
             width: 90%;
@@ -31,7 +31,6 @@
             font-size: 36px;
             text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.4);
             border-radius: 20px;
-            margin-bottom: 30px;
         }
 
         #overlay {
@@ -56,12 +55,11 @@
             padding: 10px 20px;
             font-size: 18px;
             font-weight: 700;
-            background: #2F4F4F;
+            background: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-family: 'Frank Ruhl Libre', sans-serif;
-            color: white;
+            font-family: 'David Libre', serif;
         }
 
         #shabbat-times {
@@ -73,20 +71,17 @@
             max-width: 350px;
             width: 90%;
             font-size: 22px;
-            background-color: #f1f1f1; /* צבע רקע בהיר */
         }
 
         h2 {
             font-weight: 800;
-            color: #2F4F4F; /* ירוק כהה */
+            color: #5A3E2B;
             font-size: 28px;
-            margin-bottom: 10px;
         }
 
         p {
             font-size: 20px;
             font-weight: 700;
-            color: #333;
         }
 
         #get-times-btn {
@@ -94,16 +89,12 @@
             padding: 10px 20px;
             font-size: 18px;
             font-weight: 700;
-            background: #2F4F4F; /* ירוק כהה */
+            background: #8B5E3B;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-family: 'Frank Ruhl Libre', sans-serif;
-        }
-
-        #get-times-btn:hover {
-            background-color: #4F7A7A; /* ירוק כהה בהיר יותר בעת ריחוף */
+            font-family: 'David Libre', serif;
         }
     </style>
     <script>
@@ -126,7 +117,7 @@
                 'מודיעין': {entry: "17:04", exit: "18:08", lat: 31.8983, lon: 35.0105},
                 'אילת': {entry: "17:06", exit: "18:10", lat: 29.5581, lon: 34.9482}
             };
-
+            
             function getLocation() {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(showShabbatTimes, showError);
@@ -134,24 +125,24 @@
                     document.getElementById("shabbat-times").innerHTML = "מיקום לא נתמך בדפדפן זה";
                 }
             }
-
+            
             function showShabbatTimes(position) {
                 let userLat = position.coords.latitude;
                 let userLon = position.coords.longitude;
                 let closestCity = null;
                 let minDistance = Infinity;
-
+                
                 for (const city in shabbatTimes) {
                     let cityLat = shabbatTimes[city].lat;
                     let cityLon = shabbatTimes[city].lon;
                     let distance = Math.sqrt((cityLat - userLat) ** 2 + (cityLon - userLon) ** 2);
-
+                    
                     if (distance < minDistance) {
                         minDistance = distance;
                         closestCity = city;
                     }
                 }
-
+                
                 if (closestCity) {
                     document.getElementById("shabbat-times").innerHTML = `
                         <h2>זמני שבת ב${closestCity}</h2>
@@ -160,7 +151,7 @@
                     `;
                 }
             }
-
+            
             function showError(error) {
                 document.getElementById("shabbat-times").innerHTML = "לא ניתן לאתר את המיקום";
             }
@@ -174,6 +165,6 @@
     </div>
     <header>זמני שבת לפי מיקום</header>
     <button id="get-times-btn">קבל את זמני השבת שלי</button>
-    <div id="shabbat-times">נא לאשר הרשאת מיקום</div>
+    <div id="shabbat-times">טוען...</div>
 </body>
 </html>
