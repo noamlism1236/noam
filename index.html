@@ -3,170 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>זמני שבת</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova:wght@400;700&display=swap" rel="stylesheet">
+    <title>זמני שבת לפי מיקום</title>
+    
+    <!-- טעינת פונט Bona Nova -->
+    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova&display=swap" rel="stylesheet">
+
+    <!-- עיצוב מותאם -->
     <style>
         body {
             font-family: 'Bona Nova', serif;
-            margin: 0;
-            padding: 0;
-            background-color: #FFFFFF;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
             text-align: center;
+            direction: rtl;
+            background-color: #f8f9fa;
+            color: #222;
+            padding: 20px;
         }
-
-        header {
-            background-color: #2F4F4F; /* ירוק כהה */
-            color: white;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            box-sizing: border-box;
-            font-weight: 700;
-            font-size: 36px;
-            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.4);
-            border-radius: 20px;
+        h1 {
+            color: #004d00; /* ירוק כהה */
+            font-size: 32px;
+            margin-bottom: 20px;
         }
-
-        #overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            font-weight: 700;
-            z-index: 1000;
-            flex-direction: column;
-        }
-
-        #overlay button {
-            margin-top: 20px;
-            padding: 10px 20px;
+        button {
+            padding: 12px 24px;
             font-size: 18px;
-            font-weight: 700;
-            background: white;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #004d00; /* ירוק כהה */
+            color: white;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Bona Nova', serif;
+            transition: background 0.3s ease;
         }
-
+        button:hover {
+            background-color: #003300; /* ירוק כהה יותר */
+        }
         #shabbat-times {
             margin-top: 20px;
-            padding: 30px;
-            background-color: white;
-            border-radius: 20px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-            max-width: 350px;
-            width: 90%;
-            font-size: 22px;
-            color: #2F4F4F; /* ירוק כהה */
-        }
-
-        h2 {
-            font-weight: 700;
-            color: #2F4F4F; /* ירוק כהה */
-            font-size: 28px;
-        }
-
-        p {
             font-size: 20px;
-            font-weight: 700;
-            color: #333;
-        }
-
-        #get-times-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 18px;
-            font-weight: 700;
-            background: #2F4F4F; /* ירוק כהה */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Bona Nova', serif;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            min-width: 250px;
         }
     </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById("close-overlay").addEventListener("click", function() {
-                document.getElementById("overlay").style.display = "none";
-            });
-
-            document.getElementById("get-times-btn").addEventListener("click", function() {
-                getLocation();
-            });
-
-            const shabbatTimes = {
-                'ירושלים': {entry: "16:55", exit: "18:07", lat: 31.7683, lon: 35.2137},
-                'תל אביב': {entry: "17:11", exit: "18:09", lat: 32.0853, lon: 34.7818},
-                'חיפה': {entry: "17:04", exit: "18:08", lat: 32.7940, lon: 34.9896},
-                'באר שבע': {entry: "17:05", exit: "18:09", lat: 31.2520, lon: 34.7915},
-                'אשדוד': {entry: "17:12", exit: "18:10", lat: 31.8014, lon: 34.6431},
-                'נתניה': {entry: "17:10", exit: "18:09", lat: 32.3329, lon: 34.8599},
-                'מודיעין': {entry: "17:04", exit: "18:08", lat: 31.8983, lon: 35.0105},
-                'אילת': {entry: "17:06", exit: "18:10", lat: 29.5581, lon: 34.9482}
-            };
-            
-            function getLocation() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(showShabbatTimes, showError);
-                } else {
-                    document.getElementById("shabbat-times").innerHTML = "מיקום לא נתמך בדפדפן זה";
-                }
-            }
-            
-            function showShabbatTimes(position) {
-                let userLat = position.coords.latitude;
-                let userLon = position.coords.longitude;
-                let closestCity = null;
-                let minDistance = Infinity;
-                
-                for (const city in shabbatTimes) {
-                    let cityLat = shabbatTimes[city].lat;
-                    let cityLon = shabbatTimes[city].lon;
-                    let distance = Math.sqrt((cityLat - userLat) ** 2 + (cityLon - userLon) ** 2);
-                    
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestCity = city;
-                    }
-                }
-                
-                if (closestCity) {
-                    document.getElementById("shabbat-times").innerHTML = `
-                        <h2>זמני שבת ב${closestCity}</h2>
-                        <p>כניסת שבת: ${shabbatTimes[closestCity].entry}</p>
-                        <p>יציאת שבת: ${shabbatTimes[closestCity].exit}</p>
-                    `;
-                }
-            }
-            
-            function showError(error) {
-                document.getElementById("shabbat-times").innerHTML = "לא ניתן לאתר את המיקום";
-            }
-        });
-    </script>
+    
+    <!-- טעינת ספריית SunCalc -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.8.0/suncalc.min.js"></script>
 </head>
 <body>
-    <div id="overlay">
-        לחץ על סגור כדי להיכנס לממשק
-        <button id="close-overlay">סגור</button>
-    </div>
-    <header>זמני שבת לפי מיקום</header>
-    <button id="get-times-btn">קבל את זמני השבת שלי</button>
-    <div id="shabbat-times">טוען...</div>
+    <h1>זמני שבת לפי מיקום</h1>
+    <button onclick="getShabbatTimes()">📍 הצג זמני שבת</button>
+    <div id="shabbat-times"></div>
+
+    <script>
+        function getShabbatTimes() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    const times = calculateShabbatTimes(lat, lon);
+                    
+                    document.getElementById("shabbat-times").innerHTML = 
+                        `<p><strong>🕯️ כניסת שבת:</strong> ${times.candleLighting}</p>
+                         <p><strong>🌅 צאת שבת:</strong> ${times.havdalah}</p>`;
+                    
+                }, () => {
+                    document.getElementById("shabbat-times").innerHTML = "⚠️ שגיאה בזיהוי מיקום.";
+                });
+            } else {
+                document.getElementById("shabbat-times").innerHTML = "⚠️ הדפדפן שלך לא תומך בזיהוי מיקום.";
+            }
+        }
+
+        function calculateShabbatTimes(lat, lon) {
+            const now = new Date();
+            
+            // יום שישי הקרוב
+            const friday = new Date(now);
+            friday.setDate(now.getDate() + ((5 - now.getDay() + 7) % 7));
+            
+            // שבת (יום אחרי שישי)
+            const saturday = new Date(friday);
+            saturday.setDate(friday.getDate() + 1);
+
+            // חישוב זמני שקיעה וצאת הכוכבים
+            const fridayTimes = SunCalc.getTimes(friday, lat, lon);
+            const saturdayTimes = SunCalc.getTimes(saturday, lat, lon);
+
+            // כניסת שבת - 20 דקות לפני השקיעה
+            const candleLighting = new Date(fridayTimes.sunset.getTime() - 20 * 60000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+            // צאת שבת - 40 דקות אחרי השקיעה של שבת
+            const havdalah = new Date(saturdayTimes.sunset.getTime() + 40 * 60000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+            return { candleLighting, havdalah };
+        }
+    </script>
 </body>
 </html>
