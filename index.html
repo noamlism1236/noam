@@ -2,105 +2,85 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>זמני שבת לפי מיקום</title>
-    
-    <!-- טעינת פונט Bona Nova -->
-    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova&display=swap" rel="stylesheet">
-
-    <!-- עיצוב מותאם -->
     <style>
         body {
             font-family: 'Bona Nova', serif;
+            background-color: #f0f0f0;
+            color: #333;
             text-align: center;
             direction: rtl;
-            background-color: #f8f9fa;
-            color: #222;
+        }
+        .container {
+            background-color: #fff;
             padding: 20px;
+            margin: 50px auto;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
         }
         h1 {
-            color: #004d00; /* ירוק כהה */
-            font-size: 32px;
-            margin-bottom: 20px;
+            color: #006400;
         }
-        button {
-            padding: 12px 24px;
+        p {
             font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            background-color: #004d00; /* ירוק כהה */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            transition: background 0.3s ease;
-        }
-        button:hover {
-            background-color: #003300; /* ירוק כהה יותר */
-        }
-        #shabbat-times {
-            margin-top: 20px;
-            font-size: 20px;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            display: inline-block;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-            min-width: 250px;
         }
     </style>
-    
-    <!-- טעינת ספריית SunCalc -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.8.0/suncalc.min.js"></script>
 </head>
 <body>
-    <h1>זמני שבת לפי מיקום</h1>
-    <button onclick="getShabbatTimes()">📍 הצג זמני שבת</button>
-    <div id="shabbat-times"></div>
+    <div class="container">
+        <h1>זמני שבת</h1>
+        <p>עיר: <span id="location">מאתר מיקום...</span></p>
+        <p>כניסת שבת: <span id="shabbatStart">...</span></p>
+        <p>צאת שבת: <span id="shabbatEnd">...</span></p>
+    </div>
 
     <script>
-        function getShabbatTimes() {
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
+        function fetchShabbatTimes(lat, lon) {
+            const url = `https://www.hebcal.com/shabbat/?cfg=json&latitude=${lat}&longitude=${lon}&M=on`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const candleLighting = data.items.find(item => item.category === "candles")?.date;
+                    const havdalah = data.items.find(item => item.category === "havdalah")?.date;
 
-                    const times = calculateShabbatTimes(lat, lon);
-                    
-                    document.getElementById("shabbat-times").innerHTML = 
-                        `<p><strong>🕯️ כניסת שבת:</strong> ${times.candleLighting}</p>
-                         <p><strong>🌅 צאת שבת:</strong> ${times.havdalah}</p>`;
-                    
-                }, () => {
-                    document.getElementById("shabbat-times").innerHTML = "⚠️ שגיאה בזיהוי מיקום.";
+                    if (candleLighting && havdalah) {
+                        document.getElementById("shabbatStart").textContent = new Date(candleLighting).toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'});
+                        document.getElementById("shabbatEnd").textContent = new Date(havdalah).toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'});
+                        document.getElementById("location").textContent = data.location.title;
+                    } else {
+                        document.getElementById("shabbatStart").textContent = "שגיאה";
+                        document.getElementById("shabbatEnd").textContent = "שגיאה";
+                        document.getElementById("location").textContent = "לא נמצא מידע";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching shabbat times:", error);
+                    document.getElementById("shabbatStart").textContent = "שגיאה";
+                    document.getElementById("shabbatEnd").textContent = "שגיאה";
+                    document.getElementById("location").textContent = "לא זמין";
                 });
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        fetchShabbatTimes(lat, lon);
+                    },
+                    error => {
+                        console.error("Error getting location:", error);
+                        document.getElementById("location").textContent = "מיקום לא זמין";
+                    }
+                );
             } else {
-                document.getElementById("shabbat-times").innerHTML = "⚠️ הדפדפן שלך לא תומך בזיהוי מיקום.";
+                document.getElementById("location").textContent = "מיקום לא נתמך";
             }
         }
 
-        function calculateShabbatTimes(lat, lon) {
-            const now = new Date();
-            
-            // יום שישי הקרוב
-            const friday = new Date(now);
-            friday.setDate(now.getDate() + ((5 - now.getDay() + 7) % 7));
-            
-            // שבת (יום אחרי שישי)
-            const saturday = new Date(friday);
-            saturday.setDate(friday.getDate() + 1);
-
-            // חישוב זמני שקיעה וצאת הכוכבים
-            const fridayTimes = SunCalc.getTimes(friday, lat, lon);
-            const saturdayTimes = SunCalc.getTimes(saturday, lat, lon);
-
-            // כניסת שבת - 20 דקות לפני השקיעה
-            const candleLighting = new Date(fridayTimes.sunset.getTime() - 20 * 60000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-
-            // צאת שבת - 40 דקות אחרי השקיעה של שבת
-            const havdalah = new Date(saturdayTimes.sunset.getTime() + 40 * 60000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-
-            return { candleLighting, havdalah };
-        }
+        getLocation();
     </script>
 </body>
 </html>
