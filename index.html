@@ -2,85 +2,96 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>זמני שבת לפי מיקום</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Suez+One&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Bona Nova', serif;
-            background-color: #f0f0f0;
-            color: #333;
+            font-family: 'Suez One', serif;
             text-align: center;
+            background-color: #1B4D3E; /* ירוק כהה */
+            color: #000; /* שחור */
             direction: rtl;
-        }
-        .container {
-            background-color: #fff;
+            margin: 0;
             padding: 20px;
-            margin: 50px auto;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
         }
         h1 {
-            color: #006400;
+            margin-bottom: 20px;
         }
-        p {
+        button {
+            background-color: black;
+            color: white;
             font-size: 18px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #444;
+        }
+        #zmanim {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: none;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>זמני שבת</h1>
-        <p>עיר: <span id="location">מאתר מיקום...</span></p>
-        <p>כניסת שבת: <span id="shabbatStart">...</span></p>
-        <p>צאת שבת: <span id="shabbatEnd">...</span></p>
-    </div>
+    <h1>זמני שבת לפי מיקום</h1>
+    <button onclick="getLocation()">הצג זמני שבת</button>
+    <div id="zmanim"></div>
 
     <script>
-        function fetchShabbatTimes(lat, lon) {
-            const url = `https://www.hebcal.com/shabbat/?cfg=json&latitude=${lat}&longitude=${lon}&M=on`;
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const candleLighting = data.items.find(item => item.category === "candles")?.date;
-                    const havdalah = data.items.find(item => item.category === "havdalah")?.date;
-
-                    if (candleLighting && havdalah) {
-                        document.getElementById("shabbatStart").textContent = new Date(candleLighting).toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'});
-                        document.getElementById("shabbatEnd").textContent = new Date(havdalah).toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'});
-                        document.getElementById("location").textContent = data.location.title;
-                    } else {
-                        document.getElementById("shabbatStart").textContent = "שגיאה";
-                        document.getElementById("shabbatEnd").textContent = "שגיאה";
-                        document.getElementById("location").textContent = "לא נמצא מידע";
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching shabbat times:", error);
-                    document.getElementById("shabbatStart").textContent = "שגיאה";
-                    document.getElementById("shabbatEnd").textContent = "שגיאה";
-                    document.getElementById("location").textContent = "לא זמין";
-                });
-        }
-
         function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        fetchShabbatTimes(lat, lon);
-                    },
-                    error => {
-                        console.error("Error getting location:", error);
-                        document.getElementById("location").textContent = "מיקום לא זמין";
-                    }
-                );
+                navigator.geolocation.getCurrentPosition(showZmanim, showError);
             } else {
-                document.getElementById("location").textContent = "מיקום לא נתמך";
+                document.getElementById("zmanim").innerHTML = "דפדפן זה אינו תומך באיתור מיקום.";
+                document.getElementById("zmanim").style.display = "block";
             }
         }
 
-        getLocation();
+        function showZmanim(position) {
+            let lat = position.coords.latitude;
+            let lon = position.coords.longitude;
+
+            let url = `https://www.hebcal.com/shabbat?cfg=json&latitude=${lat}&longitude=${lon}&m=50`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    let city = data.title.split(' ')[1]; // מנסה לחלץ את שם העיר
+                    let times = data.items.filter(item => item.category === "candles" || item.category === "havdalah");
+                    
+                    let html = `<h2>זמני שבת עבור ${city}</h2>`;
+                    times.forEach(event => {
+                        let eventType = event.category === "candles" ? "כניסת שבת" : "צאת שבת";
+                        let time = new Date(event.date).toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'});
+                        html += `<p>${eventType}: ${time}</p>`;
+                    });
+
+                    document.getElementById("zmanim").innerHTML = html;
+                    document.getElementById("zmanim").style.display = "block";
+                })
+                .catch(error => {
+                    document.getElementById("zmanim").innerHTML = "שגיאה בשליפת הנתונים.";
+                    document.getElementById("zmanim").style.display = "block";
+                });
+        }
+
+        function showError(error) {
+            let errorMessage = "שגיאה באיתור המיקום.";
+            if (error.code === error.PERMISSION_DENIED) {
+                errorMessage = "יש לאפשר גישה למיקום כדי לקבל זמני שבת.";
+            }
+            document.getElementById("zmanim").innerHTML = errorMessage;
+            document.getElementById("zmanim").style.display = "block";
+        }
     </script>
 </body>
 </html>
