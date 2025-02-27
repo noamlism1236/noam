@@ -6,26 +6,25 @@
     <title>זמני שבת</title>
     <link href="https://fonts.googleapis.com/css2?family=Bona+Nova&display=swap" rel="stylesheet">
     <style>
-        /* Include the CSS from above */
         body {
             font-family: 'Bona Nova', serif;
-            background-color: #000000;
-            color: #006400;
+            background-color: #000000; /* רקע שחור */
+            color: #FFFFFF; /* טקסט לבן */
             margin: 0;
             padding: 0;
         }
 
         h2 {
-            color: #006400;
+            color: #006400; /* ירוק כהה */
         }
 
         p {
-            color: #006400;
+            color: #006400; /* ירוק כהה */
             font-size: 18px;
         }
 
         .result-box {
-            background-color: #333333;
+            background-color: #333333; /* אפור כהה לרקע תיבת התוצאה */
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
@@ -44,12 +43,12 @@
     <div id="result"></div>
 
     <script>
-        // Include your JavaScript function here
+        // כאן נמצא הקוד של זמני שבת ושל פונקציית החישוב
         const shabbatTimes = {
             "ירושלים": {"כניסה": "16:55", "יציאה": "18:07", "lat": 31.7683, "lon": 35.2137},
             "נתניה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 32.3210, "lon": 34.8593},
             "תל אביב": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0853, "lon": 34.7818},
-            // Add the rest of your cities here...
+            // הוסף את יתר הערים כאן
         };
 
         function findClosestCity(userLat, userLon) {
