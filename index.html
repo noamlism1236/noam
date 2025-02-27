@@ -34,44 +34,101 @@
         .city-times {
             margin-bottom: 20px;
         }
+        .error {
+            color: red;
+        }
     </style>
 </head>
 <body>
     <h1>זמני השבת לתאריך א' באדר ה'תשפ"ה (28.02.2025)</h1>
     
-    <div class="times-container">
-        <div class="city-times">
-            <div class="city">ירושלים</div>
-            <div class="time">כניסת שבת: 17:01</div>
-            <div class="time">יציאת שבת: 18:13</div>
-        </div>
-        <div class="city-times">
-            <div class="city">נתניה</div>
-            <div class="time">כניסת שבת: 17:15</div>
-            <div class="time">יציאת שבת: 18:14</div>
-        </div>
-        <div class="city-times">
-            <div class="city">תל אביב</div>
-            <div class="time">כניסת שבת: 17:16</div>
-            <div class="time">יציאת שבת: 18:14</div>
-        </div>
-        <div class="city-times">
-            <div class="city">חדרה</div>
-            <div class="time">כניסת שבת: 17:07</div>
-            <div class="time">יציאת שבת: 18:14</div>
-        </div>
-        <div class="city-times">
-            <div class="city">חיפה</div>
-            <div class="time">כניסת שבת: 17:09</div>
-            <div class="time">יציאת שבת: 18:13</div>
-        </div>
-        <!-- הוסף את יתר הערים באופן דומה -->
-
-        <!-- לעתיד, ניתן להוסיף קוד ג'אווהסקריפט לזהות את מיקום המשתמש ולבחור את העיר הקרובה ביותר -->
+    <div class="times-container" id="times-container">
+        <!-- כאן יופיעו זמני השבת של העיר הקרובה -->
     </div>
 
     <script>
-        // ניתן להוסיף כאן קוד JavaScript לזיהוי המיקום של המשתמש ולהציג את העיר הקרובה ביותר
+        // רשימת הערים וזמני השבת שלהן
+        const cities = [
+            { name: "ירושלים", lat: 31.7683, lon: 35.2137, entry: "17:01", exit: "18:13" },
+            { name: "נתניה", lat: 32.3215, lon: 34.8537, entry: "17:15", exit: "18:14" },
+            { name: "תל אביב", lat: 32.0853, lon: 34.7818, entry: "17:16", exit: "18:14" },
+            { name: "חדרה", lat: 32.4360, lon: 34.9045, entry: "17:07", exit: "18:14" },
+            { name: "חיפה", lat: 32.8212, lon: 34.9896, entry: "17:09", exit: "18:13" },
+            { name: "טבריה", lat: 32.7995, lon: 35.5311, entry: "17:04", exit: "18:11" },
+            // הוסף שאר הערים
+        ];
+
+        // פונקציה לחישוב המרחק בין שתי נקודות גיאוגרפיות (באמצעות נוסחת Haversine)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // רדיוס כדור הארץ בקילומטרים
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLon = (lon2 - lon1) * (Math.PI / 180);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // המרחק בקילומטרים
+        }
+
+        // פונקציה לזיהוי המיקום של המשתמש והצגת זמני השבת של העיר הקרובה ביותר
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showTimesForNearestCity, showError);
+            } else {
+                document.getElementById("times-container").innerHTML = "<p class='error'>הדפדפן לא תומך בזיהוי מיקום.</p>";
+            }
+        }
+
+        // פונקציה להציג את זמני השבת של העיר הקרובה ביותר
+        function showTimesForNearestCity(position) {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+
+            let nearestCity = null;
+            let minDistance = Infinity;
+
+            // חישוב המרחק בין מיקום המשתמש לכל עיר
+            for (const city of cities) {
+                const distance = calculateDistance(userLat, userLon, city.lat, city.lon);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestCity = city;
+                }
+            }
+
+            if (nearestCity) {
+                document.getElementById("times-container").innerHTML = `
+                    <div class="city-times">
+                        <div class="city">${nearestCity.name}</div>
+                        <div class="time">כניסת שבת: ${nearestCity.entry}</div>
+                        <div class="time">יציאת שבת: ${nearestCity.exit}</div>
+                    </div>
+                `;
+            } else {
+                document.getElementById("times-container").innerHTML = "<p class='error'>לא נמצאה עיר קרובה.</p>";
+            }
+        }
+
+        // פונקציה לטיפול בשגיאות במידה ואין אפשרות לקבל את המיקום
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    document.getElementById("times-container").innerHTML = "<p class='error'>המשתמש סרב לשתף את המיקום.</p>";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    document.getElementById("times-container").innerHTML = "<p class='error'>לא ניתן להשיג את המיקום.</p>";
+                    break;
+                case error.TIMEOUT:
+                    document.getElementById("times-container").innerHTML = "<p class='error'>הזמן עבור קבלת המיקום פג.</p>";
+                    break;
+                default:
+                    document.getElementById("times-container").innerHTML = "<p class='error'>שגיאה לא ידועה.</p>";
+                    break;
+            }
+        }
+
+        // קריאה לפונקציה לזיהוי המיקום של המשתמש
+        getUserLocation();
     </script>
 </body>
 </html>
