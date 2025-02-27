@@ -3,132 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>זמני השבת לתאריך א' באדר ה'תשפ"ה</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova&display=swap" rel="stylesheet">
+    <title>חיפוש זמני שבת לפי מיקום</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@900&display=swap');
+
         body {
-            font-family: 'Bona Nova', serif;
-            background-color: #f0f0f0;
-            color: #333;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            background-color: #f1f8e9;
             text-align: center;
+            padding: 40px;
+            margin: 0;
+            color: #2c6b2f;
+            background-image: url('https://source.unsplash.com/1600x900/?nature,forest');
+            background-size: cover;
+            background-position: center;
         }
+
         h1 {
-            color: #006400; /* ירוק כהה */
+            font-size: 40px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 30px;
         }
-        .times-container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            display: inline-block;
-            margin: 20px auto;
-            text-align: left;
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            font-size: 28px;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: 900;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            font-family: 'Noto Sans Hebrew', sans-serif;
         }
-        .city {
-            font-size: 18px;
-            font-weight: bold;
+
+        button:hover {
+            background-color: #388e3c;
+            transform: scale(1.1);
         }
-        .time {
-            font-size: 16px;
+
+        p {
+            font-size: 26px;
+            font-weight: 600;
+            margin-top: 30px;
+            color: #ffffff;
+            line-height: 1.6;
         }
-        .city-times {
+
+        .result-box {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .result-box h2 {
+            font-size: 32px;
+            color: #388e3c;
             margin-bottom: 20px;
+            font-weight: 700;
         }
-        .error {
-            color: red;
+
+        .result-box p {
+            font-size: 22px;
+            color: #1b5e20;
+        }
+
+        @media (max-width: 600px) {
+            button {
+                width: 100%;
+                font-size: 22px;
+                padding: 15px 30px;
+            }
+
+            p {
+                font-size: 22px;
+            }
+
+            .result-box {
+                padding: 20px;
+            }
         }
     </style>
-</head>
-<body>
-    <h1>זמני השבת לתאריך א' באדר ה'תשפ"ה (28.02.2025)</h1>
-    
-    <div class="times-container" id="times-container">
-        <!-- כאן יופיעו זמני השבת של העיר הקרובה -->
-    </div>
-
     <script>
-        // רשימת הערים וזמני השבת שלהן
-        const cities = [
-            { name: "ירושלים", lat: 31.7683, lon: 35.2137, entry: "17:01", exit: "18:13" },
-            { name: "נתניה", lat: 32.3215, lon: 34.8537, entry: "17:15", exit: "18:14" },
-            { name: "תל אביב", lat: 32.0853, lon: 34.7818, entry: "17:16", exit: "18:14" },
-            { name: "חדרה", lat: 32.4360, lon: 34.9045, entry: "17:07", exit: "18:14" },
-            { name: "חיפה", lat: 32.8212, lon: 34.9896, entry: "17:09", exit: "18:13" },
-            { name: "טבריה", lat: 32.7995, lon: 35.5311, entry: "17:04", exit: "18:11" },
-            // הוסף שאר הערים
-        ];
+        const shabbatTimes = {
+            "ירושלים": {"כניסה": "16:55", "יציאה": "18:07", "lat": 31.7683, "lon": 35.2137},
+            "נתניה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 32.3210, "lon": 34.8593},
+            "תל אביב": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0853, "lon": 34.7818},
+            "חדרה": {"כניסה": "17:02", "יציאה": "18:08", "lat": 32.4416, "lon": 34.9136},
+            "חיפה": {"כניסה": "17:04", "יציאה": "18:08", "lat": 32.7940, "lon": 34.9896},
+            "טבריה": {"כניסה": "16:58", "יציאה": "18:06", "lat": 32.7990, "lon": 35.0021},
+            "באר שבע": {"כניסה": "17:05", "יציאה": "18:09", "lat": 31.2589, "lon": 34.7991},
+            "אשקלון": {"כניסה": "17:04", "יציאה": "18:10", "lat": 31.6687, "lon": 34.5747},
+            "רחובות": {"כניסה": "17:10", "יציאה": "18:09", "lat": 31.8920, "lon": 34.8103},
+            "אילת": {"כניסה": "17:06", "יציאה": "18:10", "lat": 29.5581, "lon": 34.9482},
+            "אשדוד": {"כניסה": "17:12", "יציאה": "18:10", "lat": 31.8010, "lon": 34.6436},
+            "מודיעין": {"כניסה": "17:04", "יציאה": "18:08", "lat": 31.9029, "lon": 35.0000},
+            "עפולה": {"כניסה": "17:02", "יציאה": "18:07", "lat": 32.6063, "lon": 35.3032},
+            "פתח תקווה": {"כניסה": "17:10", "יציאה": "18:08", "lat": 32.0857, "lon": 34.8749},
+            "נהריה": {"כניסה": "17:00", "יציאה": "18:07", "lat": 33.0093, "lon": 35.0944},
+            "קרית גת": {"כניסה": "17:03", "יציאה": "18:09", "lat": 31.5094, "lon": 34.7669},
+            "בית שמש": {"כניסה": "16:54", "יציאה": "18:08", "lat": 31.7171, "lon": 34.9997},
+            "צפת": {"כניסה": "16:58", "יציאה": "18:05", "lat": 32.9705, "lon": 35.4951},
+            "כפר סבא": {"כניסה": "17:11", "יציאה": "18:08", "lat": 32.1823, "lon": 34.9033},
+            "אופקים": {"כניסה": "17:05", "יציאה": "18:10", "lat": 31.2806, "lon": 34.6367},
+            "חולון": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0126, "lon": 34.7707},
+            "ראשון לציון": {"כניסה": "17:11", "יציאה": "18:09", "lat": 31.9710, "lon": 34.7922},
+            "דימונה": {"כניסת שבת": "17:06", "יציאת שבת": "18:09", "lat": 31.0660, "lon": 35.0214},
+            "עכו": {"כניסה": "17:00", "יציאה": "18:07", "lat": 32.9253, "lon": 35.0824},
+            "רמלה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 31.9335, "lon": 34.8723},
+            "בית שאן": {"כניסה": "16:58", "יציאה": "18:06", "lat": 32.5033, "lon": 35.5095},
+            "רעננה": {"כניסה": "17:10", "יציאה": "18:08", "lat": 32.1829, "lon": 34.8724},
+            "ערד": {"כניסה": "17:05", "יציאה": "18:08", "lat": 31.2677, "lon": 35.2047}
+        };
 
-        // פונקציה לחישוב המרחק בין שתי נקודות גיאוגרפיות (באמצעות נוסחת Haversine)
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // רדיוס כדור הארץ בקילומטרים
-            const dLat = (lat2 - lat1) * (Math.PI / 180);
-            const dLon = (lon2 - lon1) * (Math.PI / 180);
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c; // המרחק בקילומטרים
-        }
-
-        // פונקציה לזיהוי המיקום של המשתמש והצגת זמני השבת של העיר הקרובה ביותר
         function getUserLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showTimesForNearestCity, showError);
+                navigator.geolocation.getCurrentPosition(position => {
+                    findClosestCity(position.coords.latitude, position.coords.longitude);
+                }, error => {
+                    if (error.code === error.PERMISSION_DENIED) {
+                        document.getElementById("result").innerText = "נא לאפשר הרשאת מיקום בדפדפן.";
+                    } else {
+                        document.getElementById("result").innerText = "לא ניתן לאתר את מיקומך.";
+                    }
+                });
             } else {
-                document.getElementById("times-container").innerHTML = "<p class='error'>הדפדפן לא תומך בזיהוי מיקום.</p>";
+                document.getElementById("result").innerText = "הדפדפן שלך אינו תומך במיקום גיאוגרפי.";
             }
         }
 
-        // פונקציה להציג את זמני השבת של העיר הקרובה ביותר
-        function showTimesForNearestCity(position) {
-            const userLat = position.coords.latitude;
-            const userLon = position.coords.longitude;
-
-            let nearestCity = null;
+        function findClosestCity(userLat, userLon) {
+            let closestCity = "";
             let minDistance = Infinity;
 
-            // חישוב המרחק בין מיקום המשתמש לכל עיר
-            for (const city of cities) {
-                const distance = calculateDistance(userLat, userLon, city.lat, city.lon);
+            Object.keys(shabbatTimes).forEach(city => {
+                let cityData = shabbatTimes[city];
+                let distance = Math.sqrt(
+                    Math.pow(userLat - cityData.lat, 2) +
+                    Math.pow(userLon - cityData.lon, 2)
+                );
                 if (distance < minDistance) {
                     minDistance = distance;
-                    nearestCity = city;
+                    closestCity = city;
                 }
-            }
+            });
 
-            if (nearestCity) {
-                document.getElementById("times-container").innerHTML = `
-                    <div class="city-times">
-                        <div class="city">${nearestCity.name}</div>
-                        <div class="time">כניסת שבת: ${nearestCity.entry}</div>
-                        <div class="time">יציאת שבת: ${nearestCity.exit}</div>
-                    </div>
-                `;
-            } else {
-                document.getElementById("times-container").innerHTML = "<p class='error'>לא נמצאה עיר קרובה.</p>";
-            }
+            const times = shabbatTimes[closestCity];
+            document.getElementById("result").innerHTML = `
+                <div class="result-box">
+                    <h2>העיר הקרובה ביותר: ${closestCity}</h2>
+                    <p><strong>זמני כניסת שבת:</strong> ${times["כניסה"]}</p>
+                    <p><strong>זמני יציאת שבת:</strong> ${times["יציאה"]}</p>
+                </div>
+            `;
         }
-
-        // פונקציה לטיפול בשגיאות במידה ואין אפשרות לקבל את המיקום
-        function showError(error) {
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    document.getElementById("times-container").innerHTML = "<p class='error'>המשתמש סרב לשתף את המיקום.</p>";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    document.getElementById("times-container").innerHTML = "<p class='error'>לא ניתן להשיג את המיקום.</p>";
-                    break;
-                case error.TIMEOUT:
-                    document.getElementById("times-container").innerHTML = "<p class='error'>הזמן עבור קבלת המיקום פג.</p>";
-                    break;
-                default:
-                    document.getElementById("times-container").innerHTML = "<p class='error'>שגיאה לא ידועה.</p>";
-                    break;
-            }
-        }
-
-        // קריאה לפונקציה לזיהוי המיקום של המשתמש
-        getUserLocation();
     </script>
+</head>
+<body>
+    <h1>חיפוש זמני שבת</h1>
+    <button onclick="getUserLocation()">מצא זמני שבת לפי מיקום</button>
+    <div id="result"></div>
 </body>
 </html>
