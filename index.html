@@ -1,65 +1,92 @@
-const shabbatTimes = {
-    "ירושלים": {"כניסה": "16:55", "יציאה": "18:07", "lat": 31.7683, "lon": 35.2137},
-    "נתניה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 32.3210, "lon": 34.8593},
-    "תל אביב": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0853, "lon": 34.7818},
-    "חדרה": {"כניסה": "17:02", "יציאה": "18:08", "lat": 32.4416, "lon": 34.9136},
-    "חיפה": {"כניסה": "17:04", "יציאה": "18:08", "lat": 32.7940, "lon": 34.9896},
-    "טבריה": {"כניסה": "16:58", "יציאה": "18:06", "lat": 32.7990, "lon": 35.0021},
-    "באר שבע": {"כניסה": "17:05", "יציאה": "18:09", "lat": 31.2589, "lon": 34.7991},
-    "אשקלון": {"כניסה": "17:04", "יציאה": "18:10", "lat": 31.6687, "lon": 34.5747},
-    "רחובות": {"כניסה": "17:10", "יציאה": "18:09", "lat": 31.8920, "lon": 34.8103},
-    "אילת": {"כניסה": "17:06", "יציאה": "18:10", "lat": 29.5581, "lon": 34.9482},
-    "אשדוד": {"כניסה": "17:12", "יציאה": "18:10", "lat": 31.8010, "lon": 34.6436},
-    "מודיעין": {"כניסה": "17:04", "יציאה": "18:08", "lat": 31.9029, "lon": 35.0000},
-    "עפולה": {"כניסה": "17:02", "יציאה": "18:07", "lat": 32.6063, "lon": 35.3032},
-    "פתח תקווה": {"כניסה": "17:10", "יציאה": "18:08", "lat": 32.0857, "lon": 34.8749},
-    "נהריה": {"כניסה": "17:00", "יציאה": "18:07", "lat": 33.0093, "lon": 35.0944},
-    "קרית גת": {"כניסה": "17:03", "יציאה": "18:09", "lat": 31.5094, "lon": 34.7669},
-    "בית שמש": {"כניסה": "16:54", "יציאה": "18:08", "lat": 31.7171, "lon": 34.9997},
-    "צפת": {"כניסה": "16:58", "יציאה": "18:05", "lat": 32.9705, "lon": 35.4951},
-    "כפר סבא": {"כניסה": "17:11", "יציאה": "18:08", "lat": 32.1823, "lon": 34.9033},
-    "אופקים": {"כניסה": "17:05", "יציאה": "18:10", "lat": 31.2806, "lon": 34.6367},
-    "חולון": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0126, "lon": 34.7707},
-    "ראשון לציון": {"כניסה": "17:11", "יציאה": "18:09", "lat": 31.9710, "lon": 34.7922},
-    "דימונה": {"כניסה": "17:06", "יציאה": "18:09", "lat": 31.0660, "lon": 35.0214},
-    "עכו": {"כניסה": "17:00", "יציאה": "18:07", "lat": 32.9253, "lon": 35.0824},
-    "רמלה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 31.9335, "lon": 34.8723},
-    "בית שאן": {"כניסה": "16:58", "יציאה": "18:06", "lat": 32.5033, "lon": 35.5095},
-    "רעננה": {"כניסה": "17:10", "יציאה": "18:08", "lat": 32.1829, "lon": 34.8724},
-    "ערד": {"כניסה": "17:05", "יציאה": "18:08", "lat": 31.2677, "lon": 35.2047}
-};
-
-function findClosestCity(userLat, userLon) {
-    let closestCity = "";
-    let minDistance = Infinity;
-
-    function haversine(lat1, lon1, lat2, lon2) {
-        const R = 6371; // רדיוס כדור הארץ בק"מ
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = 
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // מרחק בק"מ
-    }
-
-    Object.keys(shabbatTimes).forEach(city => {
-        let cityData = shabbatTimes[city];
-        let distance = haversine(userLat, userLon, cityData.lat, cityData.lon);
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestCity = city;
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>זמני שבת</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova&display=swap" rel="stylesheet">
+    <style>
+        /* Include the CSS from above */
+        body {
+            font-family: 'Bona Nova', serif;
+            background-color: #000000;
+            color: #006400;
+            margin: 0;
+            padding: 0;
         }
-    });
 
-    const times = shabbatTimes[closestCity];
-    document.getElementById("result").innerHTML = `
-        <div class="result-box">
-            <h2>העיר הקרובה ביותר: ${closestCity}</h2>
-            <p><strong>זמני כניסת שבת:</strong> ${times["כניסה"]}</p>
-            <p><strong>זמני יציאת שבת:</strong> ${times["יציאה"]}</p>
-        </div>
-    `;
-}
+        h2 {
+            color: #006400;
+        }
+
+        p {
+            color: #006400;
+            font-size: 18px;
+        }
+
+        .result-box {
+            background-color: #333333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .result-box h2, .result-box p {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="result"></div>
+
+    <script>
+        // Include your JavaScript function here
+        const shabbatTimes = {
+            "ירושלים": {"כניסה": "16:55", "יציאה": "18:07", "lat": 31.7683, "lon": 35.2137},
+            "נתניה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 32.3210, "lon": 34.8593},
+            "תל אביב": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0853, "lon": 34.7818},
+            // Add the rest of your cities here...
+        };
+
+        function findClosestCity(userLat, userLon) {
+            let closestCity = "";
+            let minDistance = Infinity;
+
+            function haversine(lat1, lon1, lat2, lon2) {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = 
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
+            }
+
+            Object.keys(shabbatTimes).forEach(city => {
+                let cityData = shabbatTimes[city];
+                let distance = haversine(userLat, userLon, cityData.lat, cityData.lon);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestCity = city;
+                }
+            });
+
+            const times = shabbatTimes[closestCity];
+            document.getElementById("result").innerHTML = `
+                <div class="result-box">
+                    <h2>העיר הקרובה ביותר: ${closestCity}</h2>
+                    <p><strong>זמני כניסת שבת:</strong> ${times["כניסה"]}</p>
+                    <p><strong>זמני יציאת שבת:</strong> ${times["יציאה"]}</p>
+                </div>
+            `;
+        }
+    </script>
+
+</body>
+</html>
