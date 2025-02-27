@@ -30,11 +30,13 @@
         function displayShabbatTimes(data) {
             let shabbatEvents = data.items.filter(event => event.category === "candles" || event.category === "havdalah");
             let resultHtml = "<h3>זמני שבת:</h3>";
+            
             shabbatEvents.forEach(event => {
                 let dateTime = new Date(event.date);
-                let formattedTime = dateTime.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
-                resultHtml += `<p>${event.title}: ${formattedTime}</p>`;
+                let localTime = new Intl.DateTimeFormat("he-IL", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }).format(dateTime);
+                resultHtml += `<p>${event.title}: ${localTime}</p>`;
             });
+            
             document.getElementById("times").innerHTML = resultHtml;
         }
     </script>
