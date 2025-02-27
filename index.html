@@ -3,47 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>זמני שבת</title>
-    <script>
-        async function fetchShabbatTimes() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async position => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const apiUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${lat}&longitude=${lon}&m=50`;
-                    
-                    try {
-                        const response = await fetch(apiUrl);
-                        const data = await response.json();
-                        displayShabbatTimes(data);
-                    } catch (error) {
-                        document.getElementById("times").innerHTML = "שגיאה בקבלת הנתונים";
-                    }
-                }, () => {
-                    document.getElementById("times").innerHTML = "לא ניתן להשיג מיקום";
-                });
-            } else {
-                document.getElementById("times").innerHTML = "המכשיר שלך לא תומך בגיאולוקציה";
-            }
+    <title>זמני השבת לתאריך א' באדר ה'תשפ"ה</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Bona Nova', serif;
+            background-color: #f0f0f0;
+            color: #333;
+            text-align: center;
         }
-        
-        function displayShabbatTimes(data) {
-            let shabbatEvents = data.items.filter(event => event.category === "candles" || event.category === "havdalah");
-            let resultHtml = "<h3>זמני שבת:</h3>";
-            
-            shabbatEvents.forEach(event => {
-                let dateTime = new Date(event.date);
-                let localTime = new Intl.DateTimeFormat("he-IL", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }).format(dateTime);
-                resultHtml += `<p>${event.title}: ${localTime}</p>`;
-            });
-            
-            document.getElementById("times").innerHTML = resultHtml;
+        h1 {
+            color: #006400; /* ירוק כהה */
         }
-    </script>
+        .times-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: inline-block;
+            margin: 20px auto;
+            text-align: left;
+        }
+        .city {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .time {
+            font-size: 16px;
+        }
+        .city-times {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>זמני שבת הקרובים</h1>
-    <button onclick="fetchShabbatTimes()">הצג</button>
-    <div id="times"></div>
+    <h1>זמני השבת לתאריך א' באדר ה'תשפ"ה (28.02.2025)</h1>
+    
+    <div class="times-container">
+        <div class="city-times">
+            <div class="city">ירושלים</div>
+            <div class="time">כניסת שבת: 17:01</div>
+            <div class="time">יציאת שבת: 18:13</div>
+        </div>
+        <div class="city-times">
+            <div class="city">נתניה</div>
+            <div class="time">כניסת שבת: 17:15</div>
+            <div class="time">יציאת שבת: 18:14</div>
+        </div>
+        <div class="city-times">
+            <div class="city">תל אביב</div>
+            <div class="time">כניסת שבת: 17:16</div>
+            <div class="time">יציאת שבת: 18:14</div>
+        </div>
+        <div class="city-times">
+            <div class="city">חדרה</div>
+            <div class="time">כניסת שבת: 17:07</div>
+            <div class="time">יציאת שבת: 18:14</div>
+        </div>
+        <div class="city-times">
+            <div class="city">חיפה</div>
+            <div class="time">כניסת שבת: 17:09</div>
+            <div class="time">יציאת שבת: 18:13</div>
+        </div>
+        <!-- הוסף את יתר הערים באופן דומה -->
+
+        <!-- לעתיד, ניתן להוסיף קוד ג'אווהסקריפט לזהות את מיקום המשתמש ולבחור את העיר הקרובה ביותר -->
+    </div>
+
+    <script>
+        // ניתן להוסיף כאן קוד JavaScript לזיהוי המיקום של המשתמש ולהציג את העיר הקרובה ביותר
+    </script>
 </body>
 </html>
