@@ -1,74 +1,47 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>זמני שבת לפי מיקום</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Bona Nova', serif;
-            background-color: #1b3d1b;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        #shabbat-times {
-            background: #2e5e2e;
-            padding: 20px;
-            border-radius: 10px;
-            display: inline-block;
-        }
-        button {
-            background-color: black;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-    <h1>זמני שבת לפי מיקומך</h1>
-    <button onclick="getLocation()">הצג זמני שבת</button>
-    <div id="shabbat-times"></div>
-
+    <title>זמני שבת</title>
     <script>
-        function getLocation() {
+        async function fetchShabbatTimes() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(getShabbatTimes, showError);
+                navigator.geolocation.getCurrentPosition(async position => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const apiUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${lat}&longitude=${lon}&m=50`;
+                    
+                    try {
+                        const response = await fetch(apiUrl);
+                        const data = await response.json();
+                        displayShabbatTimes(data);
+                    } catch (error) {
+                        document.getElementById("times").innerHTML = "שגיאה בקבלת הנתונים";
+                    }
+                }, () => {
+                    document.getElementById("times").innerHTML = "לא ניתן להשיג מיקום";
+                });
             } else {
-                alert("המיקום שלך לא נתמך בדפדפן זה.");
+                document.getElementById("times").innerHTML = "המכשיר שלך לא תומך בגיאולוקציה";
             }
         }
-
-        function getShabbatTimes(position) {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            const url = `https://www.hebcal.com/shabbat?cfg=json&latitude=${lat}&longitude=${lon}&m=50`;
-            
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    let entry = data.items.find(item => item.category === "candles");
-                    let havdalah = data.items.find(item => item.category === "havdalah");
-                    let city = data.location.title;
-
-                    document.getElementById("shabbat-times").innerHTML = `
-                        <h2>${city}</h2>
-                        <p><b>כניסת שבת:</b> ${new Date(entry.date).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</p>
-                        <p><b>צאת שבת:</b> ${new Date(havdalah.date).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</p>
-                    `;
-                })
-                .catch(error => {
-                    console.error("שגיאה בשליפת זמני שבת:", error);
-                });
-        }
-
-        function showError(error) {
-            alert("לא ניתן לאתר את מיקומך. אנא בדוק את ההרשאות.");
+        
+        function displayShabbatTimes(data) {
+            let shabbatEvents = data.items.filter(event => event.category === "candles" || event.category === "havdalah");
+            let resultHtml = "<h3>זמני שבת:</h3>";
+            shabbatEvents.forEach(event => {
+                let dateTime = new Date(event.date);
+                let formattedTime = dateTime.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+                resultHtml += `<p>${event.title}: ${formattedTime}</p>`;
+            });
+            document.getElementById("times").innerHTML = resultHtml;
         }
     </script>
+</head>
+<body>
+    <h1>זמני שבת הקרובים</h1>
+    <button onclick="fetchShabbatTimes()">הצג</button>
+    <div id="times"></div>
 </body>
 </html>
