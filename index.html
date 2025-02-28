@@ -49,7 +49,10 @@
             "ירושלים": {"כניסה": "16:55", "יציאה": "18:07", "lat": 31.7683, "lon": 35.2137},
             "נתניה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 32.3210, "lon": 34.8593},
             "תל אביב": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0853, "lon": 34.7818},
-            // הוסף ערים נוספות לפי הצורך
+            "מודיעין": {"כניסה": "17:05", "יציאה": "18:08", "lat": 31.8983, "lon": 35.0075},
+            "באר שבע": {"כניסה": "17:02", "יציאה": "18:06", "lat": 31.2518, "lon": 34.7913},
+            "רחובות": {"כניסה": "17:09", "יציאה": "18:08", "lat": 31.8961, "lon": 34.8113},
+            "אילת": {"כניסה": "17:07", "יציאה": "18:05", "lat": 29.5577, "lon": 34.9519}
         };
 
         function findClosestCity(userLat, userLon) {
@@ -95,6 +98,7 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
+                        console.log("Latitude:", position.coords.latitude, "Longitude:", position.coords.longitude);
                         findClosestCity(position.coords.latitude, position.coords.longitude);
                     },
                     (error) => {
