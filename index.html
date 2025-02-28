@@ -4,55 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>זמני שבת</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Bona Nova', serif;
-            background-color: #000000; /* רקע שחור */
-            color: #FFFFFF; /* טקסט לבן */
+            background-color: #FFFFFF; 
+            color: #000000;
             margin: 0;
             padding: 0;
             text-align: center;
         }
-
         h2 {
-            color: #006400; /* ירוק כהה */
+            color: #006400;
+            font-weight: 700;
         }
-
         p {
-            color: #006400; /* ירוק כהה */
+            color: #000000;
             font-size: 18px;
         }
-
         .result-box {
-            background-color: #333333; /* אפור כהה לרקע תיבת התוצאה */
+            background-color: #F5F5F5;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             margin: 20px auto;
             width: 80%;
             max-width: 600px;
-        }
-
-        .result-box h2, .result-box p {
-            text-align: center;
+            border: 1px solid #CCCCCC;
         }
     </style>
 </head>
 <body>
-
     <h2>זמני שבת לפי מיקום</h2>
     <div id="result">טוען נתונים...</div>
-
     <script>
         const shabbatTimes = {
-            "ירושלים": {"כניסה": "16:55", "יציאה": "18:07", "lat": 31.7683, "lon": 35.2137},
-            "נתניה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 32.3210, "lon": 34.8593},
-            "תל אביב": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0853, "lon": 34.7818},
-            "מודיעין": {"כניסה": "17:05", "יציאה": "18:08", "lat": 31.8983, "lon": 35.0075},
-            "באר שבע": {"כניסה": "17:02", "יציאה": "18:06", "lat": 31.2518, "lon": 34.7913},
-            "רחובות": {"כניסה": "17:09", "יציאה": "18:08", "lat": 31.8961, "lon": 34.8113},
-            "אילת": {"כניסה": "17:07", "יציאה": "18:05", "lat": 29.5577, "lon": 34.9519}
+            "ירושלים": {"כניסה": "17:01", "יציאה": "18:13", "lat": 31.7683, "lon": 35.2137},
+            "נתניה": {"כניסה": "17:15", "יציאה": "18:14", "lat": 32.3210, "lon": 34.8593},
+            "תל אביב": {"כניסה": "17:16", "יציאה": "18:14", "lat": 32.0853, "lon": 34.7818},
+            "חדרה": {"כניסה": "17:07", "יציאה": "18:14", "lat": 32.4417, "lon": 34.9196},
+            "חיפה": {"כניסה": "17:09", "יציאה": "18:13", "lat": 32.7940, "lon": 34.9896},
+            "טבריה": {"כניסה": "17:04", "יציאה": "18:11", "lat": 32.7896, "lon": 35.5248},
+            "באר שבע": {"כניסה": "17:11", "יציאה": "18:15", "lat": 31.2518, "lon": 34.7913},
+            "אשקלון": {"כניסה": "17:10", "יציאה": "18:15", "lat": 31.6693, "lon": 34.5715},
+            "רחובות": {"כניסה": "17:16", "יציאה": "18:14", "lat": 31.8961, "lon": 34.8113},
+            "אילת": {"כניסה": "17:11", "יציאה": "18:14", "lat": 29.5577, "lon": 34.9519},
         };
 
         function findClosestCity(userLat, userLon) {
@@ -60,13 +56,12 @@
             let minDistance = Infinity;
 
             function haversine(lat1, lon1, lat2, lon2) {
-                const R = 6371; // רדיוס כדור הארץ בק"מ
+                const R = 6371;
                 const dLat = (lat2 - lat1) * Math.PI / 180;
                 const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = 
-                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon / 2) * Math.sin(dLon / 2);
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
                 return R * c;
             }
@@ -98,7 +93,6 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        console.log("Latitude:", position.coords.latitude, "Longitude:", position.coords.longitude);
                         findClosestCity(position.coords.latitude, position.coords.longitude);
                     },
                     (error) => {
@@ -112,6 +106,5 @@
 
         getUserLocation();
     </script>
-
 </body>
 </html>
