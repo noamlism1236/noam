@@ -12,6 +12,7 @@
             color: #FFFFFF; /* טקסט לבן */
             margin: 0;
             padding: 0;
+            text-align: center;
         }
 
         h2 {
@@ -40,15 +41,15 @@
 </head>
 <body>
 
-    <div id="result"></div>
+    <h2>זמני שבת לפי מיקום</h2>
+    <div id="result">טוען נתונים...</div>
 
     <script>
-        // כאן נמצא הקוד של זמני שבת ושל פונקציית החישוב
         const shabbatTimes = {
             "ירושלים": {"כניסה": "16:55", "יציאה": "18:07", "lat": 31.7683, "lon": 35.2137},
             "נתניה": {"כניסה": "17:10", "יציאה": "18:09", "lat": 32.3210, "lon": 34.8593},
             "תל אביב": {"כניסה": "17:11", "יציאה": "18:09", "lat": 32.0853, "lon": 34.7818},
-            // הוסף את יתר הערים כאן
+            // הוסף ערים נוספות לפי הצורך
         };
 
         function findClosestCity(userLat, userLon) {
@@ -56,7 +57,7 @@
             let minDistance = Infinity;
 
             function haversine(lat1, lon1, lat2, lon2) {
-                const R = 6371;
+                const R = 6371; // רדיוס כדור הארץ בק"מ
                 const dLat = (lat2 - lat1) * Math.PI / 180;
                 const dLon = (lon2 - lon1) * Math.PI / 180;
                 const a = 
@@ -76,15 +77,36 @@
                 }
             });
 
-            const times = shabbatTimes[closestCity];
-            document.getElementById("result").innerHTML = `
-                <div class="result-box">
-                    <h2>העיר הקרובה ביותר: ${closestCity}</h2>
-                    <p><strong>זמני כניסת שבת:</strong> ${times["כניסה"]}</p>
-                    <p><strong>זמני יציאת שבת:</strong> ${times["יציאה"]}</p>
-                </div>
-            `;
+            if (closestCity) {
+                const times = shabbatTimes[closestCity];
+                document.getElementById("result").innerHTML = `
+                    <div class="result-box">
+                        <h2>העיר הקרובה ביותר: ${closestCity}</h2>
+                        <p><strong>זמני כניסת שבת:</strong> ${times["כניסה"]}</p>
+                        <p><strong>זמני יציאת שבת:</strong> ${times["יציאה"]}</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById("result").innerHTML = "<p>לא נמצאו זמני שבת לקרבתך.</p>";
+            }
         }
+
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        findClosestCity(position.coords.latitude, position.coords.longitude);
+                    },
+                    (error) => {
+                        document.getElementById("result").innerHTML = "<p>לא ניתן לקבל מיקום. אנא אפשר גישה ל-GPS.</p>";
+                    }
+                );
+            } else {
+                document.getElementById("result").innerHTML = "<p>המכשיר שלך לא תומך ב-GPS.</p>";
+            }
+        }
+
+        getUserLocation();
     </script>
 
 </body>
