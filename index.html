@@ -13,6 +13,13 @@
             margin: 0;
             padding: 0;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 100%;
         }
         h2 {
             color: #006400;
@@ -27,7 +34,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
+            margin: auto;
             width: 80%;
             max-width: 600px;
             border: 1px solid #CCCCCC;
@@ -35,8 +42,10 @@
     </style>
 </head>
 <body>
-    <h2>זמני שבת לפי מיקום</h2>
-    <div id="result">טוען נתונים...</div>
+    <div class="container">
+        <h2>זמני שבת לפי מיקום</h2>
+        <div id="result">טוען נתונים...</div>
+    </div>
     <script>
         const shabbatTimes = {
             "ירושלים": {"כניסה": "17:01", "יציאה": "18:13", "lat": 31.7683, "lon": 35.2137},
