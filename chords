@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חיפוש מילים ואקורדים</title>
+    <script>
+        async function searchSong() {
+            let songName = document.getElementById('songInput').value;
+            let resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = "מחפש...";
+            
+            try {
+                let response = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(songName)}`);
+                let data = await response.json();
+                
+                if (data.lyrics) {
+                    let lyrics = data.lyrics.replace(/\n/g, '<br>');
+                    let chords = await fetchChords(songName);
+                    resultDiv.innerHTML = `<pre>${chords}</pre><br><p>${lyrics}</p>`;
+                } else {
+                    resultDiv.innerHTML = "לא נמצאו מילים לשיר זה.";
+                }
+            } catch (error) {
+                resultDiv.innerHTML = "שגיאה בחיפוש השיר.";
+            }
+        }
+        
+        async function fetchChords(songName) {
+            try {
+                let response = await fetch(`https://some-chords-api.com/search?q=${encodeURIComponent(songName)}`);
+                let data = await response.json();
+                return data.chords || "לא נמצאו אקורדים.";
+            } catch (error) {
+                return "שגיאה בחיפוש האקורדים.";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>חיפוש מילים ואקורדים</h1>
+    <input type="text" id="songInput" placeholder="הכנס שם שיר">
+    <button onclick="searchSong()">חפש</button>
+    <div id="result"></div>
+</body>
+</html>
