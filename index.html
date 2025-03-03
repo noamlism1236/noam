@@ -27,7 +27,7 @@
             font-weight: 700;
         }
         .result-box {
-            background-color: #FFD1DC;
+            background-color: #8B0000;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -35,16 +35,18 @@
             width: 80%;
             max-width: 600px;
             border: 1px solid #FF0000;
+            color: white;
         }
         select, button {
             margin-top: 10px;
             padding: 10px;
             font-size: 16px;
-            background-color: #FF4D4D;
+            background-color: black;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-family: 'Bona Nova', serif;
         }
         #countdown {
             font-size: 24px;
@@ -118,7 +120,8 @@
             function updateCountdown() {
                 const now = new Date();
                 let nextShabbat = new Date();
-                nextShabbat.setHours(parseInt(shabbatTime.split(":"[0])), parseInt(shabbatTime.split(":"[1])), 0, 0);
+                const [hours, minutes] = shabbatTime.split(":").map(Number);
+                nextShabbat.setHours(hours, minutes, 0, 0);
 
                 while (nextShabbat.getDay() !== 5) {
                     nextShabbat.setDate(nextShabbat.getDate() + 1);
@@ -129,10 +132,10 @@
                 }
 
                 const diff = nextShabbat - now;
-                const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-                const minutes = Math.floor((diff / (1000 * 60)) % 60);
-                const seconds = Math.floor((diff / 1000) % 60);
-                document.getElementById("countdown").innerText = `עוד ${hours} שעות, ${minutes} דקות ו-${seconds} שניות`;
+                const hoursLeft = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const minutesLeft = Math.floor((diff / (1000 * 60)) % 60);
+                const secondsLeft = Math.floor((diff / 1000) % 60);
+                document.getElementById("countdown").innerText = `עוד ${hoursLeft} שעות, ${minutesLeft} דקות ו-${secondsLeft} שניות`;
                 setTimeout(updateCountdown, 1000);
             }
             updateCountdown();
