@@ -8,7 +8,7 @@
     <style>
         body {
             font-family: 'Bona Nova', serif;
-            background-color: #FFFFFF; 
+            background-color: #FFFFFF;
             color: #000000;
             margin: 0;
             padding: 0;
@@ -17,6 +17,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            flex-direction: column;
         }
         .container {
             width: 100%;
@@ -24,15 +25,6 @@
         h2 {
             color: #006400;
             font-weight: 700;
-        }
-        h3 {
-            color: #000080;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        p {
-            color: #000000;
-            font-size: 18px;
         }
         .result-box {
             background-color: #F5F5F5;
@@ -44,82 +36,96 @@
             max-width: 600px;
             border: 1px solid #CCCCCC;
         }
+        select, button {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #countdown {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #D35400;
+        }
+        #countdown-text {
+            font-size: 20px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>זמני שבת לפי מיקום</h2>
-        <h3>פרשת השבוע: ויקהל</h3>
+        <label for="citySelect">בחר עיר:</label>
+        <select id="citySelect"></select>
+        <button onclick="savePreferredCity()">שמור כעיר מועדפת</button>
         <div id="result">טוען נתונים...</div>
+        <div id="countdown"></div>
+        <div id="countdown-text">לא יכולים לחכות לשבת 🕯️</div>
     </div>
     <script>
         const shabbatTimes = {
-            "ירושלים": {"כניסה": "17:01", "יציאה": "18:13", "lat": 31.7683, "lon": 35.2137},
-            "נתניה": {"כניסה": "17:15", "יציאה": "18:14", "lat": 32.3210, "lon": 34.8593},
-            "תל אביב": {"כניסה": "17:16", "יציאה": "18:14", "lat": 32.0853, "lon": 34.7818},
-            "חדרה": {"כניסה": "17:07", "יציאה": "18:14", "lat": 32.4417, "lon": 34.9196},
-            "חיפה": {"כניסה": "17:09", "יציאה": "18:13", "lat": 32.7940, "lon": 34.9896},
-            "טבריה": {"כניסה": "17:04", "יציאה": "18:11", "lat": 32.7896, "lon": 35.5248},
-            "באר שבע": {"כניסה": "17:11", "יציאה": "18:15", "lat": 31.2518, "lon": 34.7913},
-            "אשקלון": {"כניסה": "17:10", "יציאה": "18:15", "lat": 31.6693, "lon": 34.5715},
-            "רחובות": {"כניסה": "17:16", "יציאה": "18:14", "lat": 31.8961, "lon": 34.8113},
-            "אילת": {"כניסה": "17:11", "יציאה": "18:14", "lat": 29.5577, "lon": 34.9519},
+            "ירושלים": {"כניסה": "17:01", "יציאה": "18:13"},
+            "תל אביב": {"כניסה": "17:16", "יציאה": "18:14"},
+            "חיפה": {"כניסה": "17:09", "יציאה": "18:13"},
+            "באר שבע": {"כניסה": "17:11", "יציאה": "18:15"},
         };
 
-        function findClosestCity(userLat, userLon) {
-            let closestCity = "";
-            let minDistance = Infinity;
+        function populateCitySelect() {
+            const select = document.getElementById("citySelect");
+            select.innerHTML = Object.keys(shabbatTimes).map(city => `<option value="${city}">${city}</option>`).join("");
+        }
 
-            function haversine(lat1, lon1, lat2, lon2) {
-                const R = 6371;
-                const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                          Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                return R * c;
-            }
+        function savePreferredCity() {
+            const selectedCity = document.getElementById("citySelect").value;
+            localStorage.setItem("preferredCity", selectedCity);
+            displayShabbatTimes(selectedCity);
+        }
 
-            Object.keys(shabbatTimes).forEach(city => {
-                let cityData = shabbatTimes[city];
-                let distance = haversine(userLat, userLon, cityData.lat, cityData.lon);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestCity = city;
-                }
-            });
+        function displayShabbatTimes(city) {
+            const times = shabbatTimes[city];
+            document.getElementById("result").innerHTML = `
+                <div class="result-box">
+                    <h2>${city}</h2>
+                    <p><strong>כניסת שבת:</strong> ${times["כניסה"]}</p>
+                    <p><strong>יציאת שבת:</strong> ${times["יציאה"]}</p>
+                </div>`;
+            startCountdown(times["כניסה"]);
+        }
 
-            if (closestCity) {
-                const times = shabbatTimes[closestCity];
-                document.getElementById("result").innerHTML = `
-                    <div class="result-box">
-                        <h2>העיר הקרובה ביותר: ${closestCity}</h2>
-                        <p><strong>זמני כניסת שבת:</strong> ${times["כניסה"]}</p>
-                        <p><strong>זמני יציאת שבת:</strong> ${times["יציאה"]}</p>
-                    </div>
-                `;
+        function loadPreferredCity() {
+            const savedCity = localStorage.getItem("preferredCity");
+            if (savedCity && shabbatTimes[savedCity]) {
+                document.getElementById("citySelect").value = savedCity;
+                displayShabbatTimes(savedCity);
             } else {
-                document.getElementById("result").innerHTML = "<p>לא נמצאו זמני שבת לקרבתך.</p>";
+                displayShabbatTimes(Object.keys(shabbatTimes)[0]);
             }
         }
 
-        function getUserLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        findClosestCity(position.coords.latitude, position.coords.longitude);
-                    },
-                    (error) => {
-                        document.getElementById("result").innerHTML = "<p>לא ניתן לקבל מיקום. אנא אפשר גישה ל-GPS.</p>";
-                    }
-                );
-            } else {
-                document.getElementById("result").innerHTML = "<p>המכשיר שלך לא תומך ב-GPS.</p>";
+        function startCountdown(shabbatTime) {
+            const now = new Date();
+            const shabbatHour = parseInt(shabbatTime.split(":")[0]);
+            const shabbatMinute = parseInt(shabbatTime.split(":")[1]);
+            const nextShabbat = new Date(now);
+            nextShabbat.setHours(shabbatHour, shabbatMinute, 0, 0);
+            if (now > nextShabbat) {
+                nextShabbat.setDate(nextShabbat.getDate() + 7);
             }
+
+            function updateCountdown() {
+                const diff = nextShabbat - new Date();
+                const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const minutes = Math.floor((diff / (1000 * 60)) % 60);
+                const seconds = Math.floor((diff / 1000) % 60);
+                document.getElementById("countdown").innerText = `עוד ${hours} שעות, ${minutes} דקות ו-${seconds} שניות`;
+                setTimeout(updateCountdown, 1000);
+            }
+            updateCountdown();
         }
 
-        getUserLocation();
+        populateCitySelect();
+        loadPreferredCity();
     </script>
 </body>
 </html>
