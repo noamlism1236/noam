@@ -23,33 +23,44 @@
             width: 100%;
         }
         h2 {
-            color: #006400;
+            color: #8B0000;
             font-weight: 700;
         }
         .result-box {
-            background-color: #F5F5F5;
+            background-color: #FFD1DC;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             margin: auto;
             width: 80%;
             max-width: 600px;
-            border: 1px solid #CCCCCC;
+            border: 1px solid #FF0000;
         }
         select, button {
             margin-top: 10px;
             padding: 10px;
             font-size: 16px;
+            background-color: #FF4D4D;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
         #countdown {
             font-size: 24px;
             font-weight: bold;
             margin-top: 20px;
             color: #D35400;
+            background-color: #FFD1DC;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
         }
         #countdown-text {
             font-size: 20px;
             margin-top: 10px;
+            color: #8B0000;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -104,17 +115,20 @@
         }
 
         function startCountdown(shabbatTime) {
-            const now = new Date();
-            const shabbatHour = parseInt(shabbatTime.split(":")[0]);
-            const shabbatMinute = parseInt(shabbatTime.split(":")[1]);
-            const nextShabbat = new Date(now);
-            nextShabbat.setHours(shabbatHour, shabbatMinute, 0, 0);
-            if (now > nextShabbat) {
-                nextShabbat.setDate(nextShabbat.getDate() + 7);
-            }
-
             function updateCountdown() {
-                const diff = nextShabbat - new Date();
+                const now = new Date();
+                let nextShabbat = new Date();
+                nextShabbat.setHours(parseInt(shabbatTime.split(":"[0])), parseInt(shabbatTime.split(":"[1])), 0, 0);
+
+                while (nextShabbat.getDay() !== 5) {
+                    nextShabbat.setDate(nextShabbat.getDate() + 1);
+                }
+
+                if (now > nextShabbat) {
+                    nextShabbat.setDate(nextShabbat.getDate() + 7);
+                }
+
+                const diff = nextShabbat - now;
                 const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
                 const minutes = Math.floor((diff / (1000 * 60)) % 60);
                 const seconds = Math.floor((diff / 1000) % 60);
