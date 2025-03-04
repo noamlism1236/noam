@@ -21,6 +21,9 @@
         }
         .container {
             width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+            padding: 0 10px;
         }
         h2 {
             color: ##ffffff;
@@ -32,10 +35,17 @@
             border-radius: 10px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             margin: auto;
-            width: 80%;
-            max-width: 600px;
+            width: 100%;
             border: 1px solid #FF0000;
             color: white;
+        }
+        .select-container {
+            display: flex;
+            flex-direction: row-reverse; /* הצב את הסלקטור מימין */
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
         }
         select, button {
             margin-top: 10px;
@@ -47,6 +57,12 @@
             border-radius: 5px;
             cursor: pointer;
             font-family: 'Bona Nova', serif;
+            width: 100%;
+        }
+        .buttons-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
         }
         #countdown {
             font-size: 24px;
@@ -64,14 +80,38 @@
             color: #ff7373;
             font-weight: bold;
         }
+
+        /* התאמת תצוגה למובייל */
+        @media (max-width: 600px) {
+            .select-container {
+                flex-direction: column-reverse;
+                margin-bottom: 10px;
+            }
+            .buttons-container {
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            select, button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            #countdown-text {
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>זמני שבת לפי מיקום</h2>
-        <label for="citySelect">בחר עיר:</label>
-        <select id="citySelect"></select>
-        <button onclick="savePreferredCity()">שמור כעיר מועדפת</button>
+        <div class="select-container">
+            <label for="citySelect">בחר עיר:</label>
+            <select id="citySelect"></select>
+        </div>
+        <div class="buttons-container">
+            <button onclick="savePreferredCity()">שמור כעיר מועדפת</button>
+        </div>
         <div id="result">טוען נתונים...</div>
         <div id="countdown"></div>
         <div id="countdown-text">לא יכולים לחכות לשבת 🕯️</div>
