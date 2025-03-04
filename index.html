@@ -3,186 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>זמני שבת</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bona+Nova:wght@400;700&display=swap" rel="stylesheet">
+    <title>שבת ולימוד תורה</title>
     <style>
         body {
-            font-family: 'Bona Nova', serif;
-            background-color: #FFFFFF;
-            color: #000000;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
             margin: 0;
-            padding: 0;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
-        }
-        .container {
-            width: 100%;
-            max-width: 600px;
-            margin-top: 20px;
-            padding: 0 10px;
-        }
-        h2 {
-            color: ##ffffff;
-            font-weight: 700;
-        }
-        .result-box {
-            background-color: #8B0000;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            margin: auto;
-            width: 100%;
-            border: 1px solid #FF0000;
-            color: white;
+            text-align: center;
         }
-        .select-container {
-            display: flex;
-            flex-direction: row-reverse; /* הצב את הסלקטור מימין */
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
+        h1, h2 {
+            color: #444;
+        }
+        .menu {
             margin-bottom: 20px;
         }
-        select, button {
-            margin-top: 10px;
-            padding: 10px;
-            font-size: 16px;
-            background-color: black;
+        .menu a {
+            margin: 10px;
+            text-decoration: none;
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Bona Nova', serif;
-            width: 100%;
-        }
-        .buttons-container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-        }
-        #countdown {
-            font-size: 24px;
-            font-weight: bold;
-            margin-top: 20px;
-            color: #ff7373;
-            background-color: #ffffff;
-            padding: 10px;
+            background-color: #007BFF;
+            padding: 10px 20px;
             border-radius: 5px;
             display: inline-block;
         }
-        #countdown-text {
-            font-size: 20px;
-            margin-top: 10px;
-            color: #ff7373;
-            font-weight: bold;
+        .menu a:hover {
+            background-color: #0056b3;
         }
-
-        /* התאמת תצוגה למובייל */
-        @media (max-width: 600px) {
-            .select-container {
-                flex-direction: column-reverse;
-                margin-bottom: 10px;
-            }
-            .buttons-container {
-                flex-direction: column;
-                align-items: center;
-                width: 100%;
-            }
-            select, button {
-                width: 100%;
-                margin-bottom: 10px;
-            }
-            #countdown-text {
-                font-size: 18px;
-            }
+        .shabbat-times {
+            margin-top: 20px;
+        }
+        .city-select {
+            margin-top: 20px;
+        }
+        .city-suggestions {
+            list-style-type: none;
+            padding: 0;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .city-suggestions li {
+            padding: 8px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+        }
+        .city-suggestions li:hover {
+            background-color: #ddd;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>זמני שבת לפי מיקום</h2>
-        <div class="select-container">
-            <label for="citySelect">בחר עיר:</label>
-            <select id="citySelect"></select>
-        </div>
-        <div class="buttons-container">
-            <button onclick="savePreferredCity()">שמור כעיר מועדפת</button>
-        </div>
-        <div id="result">טוען נתונים...</div>
-        <div id="countdown"></div>
-        <div id="countdown-text">לא יכולים לחכות לשבת 🕯️</div>
+    <h1>שבת ולימוד תורה</h1>
+    <div class="menu">
+        <a href="shabbat-times.html">זמני שבת</a>
+        <a href="torah-lessons.html">שיעורי תורה</a>
     </div>
+
+    <h2>זמני שבת לפי מיקום</h2>
+    <div id="shabbatTimes">טוען נתונים...</div>
+
+    <div class="city-select" id="citySelect" style="display:none;">
+        <h3>לא מרוצה מהמיקום? בחר ידנית:</h3>
+        <input type="text" id="citySearch" placeholder="חפש עיר" oninput="searchCity()" autocomplete="off">
+        <ul id="suggestionsList" class="city-suggestions" style="display:none;"></ul>
+    </div>
+
     <script>
-        const shabbatTimes = {
-            "ירושלים": {"כניסה": "17:01", "יציאה": "18:13"},
-            "תל אביב": {"כניסה": "17:16", "יציאה": "18:14"},
-            "חיפה": {"כניסה": "17:09", "יציאה": "18:13"},
-            "באר שבע": {"כניסה": "17:11", "יציאה": "18:15"},
+        const cities = {
+            "ירושלים": { "lat": 31.7683, "lon": 35.2137, "candleLighting": "17:06", "havdalah": "18:18" },
+            "נתניה": { "lat": 32.3218, "lon": 34.8530, "candleLighting": "17:21", "havdalah": "18:19" },
+            "תל אביב": { "lat": 32.0853, "lon": 34.7818, "candleLighting": "17:22", "havdalah": "18:19" },
+            "חדרה": { "lat": 32.4360, "lon": 34.9180, "candleLighting": "17:13", "havdalah": "18:19" },
+            "חיפה": { "lat": 32.7940, "lon": 34.9896, "candleLighting": "17:15", "havdalah": "18:18" },
+            "טבריה": { "lat": 32.7993, "lon": 35.5310, "candleLighting": "17:09", "havdalah": "18:16" },
+            "באר שבע": { "lat": 31.2518, "lon": 34.7913, "candleLighting": "17:16", "havdalah": "18:19" },
+            "אשקלון": { "lat": 31.6561, "lon": 34.5704, "candleLighting": "17:15", "havdalah": "18:20" },
+            "רחובות": { "lat": 31.8927, "lon": 34.8117, "candleLighting": "17:16", "havdalah": "18:14" },
+            "אילת": { "lat": 29.5581, "lon": 34.9482, "candleLighting": "17:15", "havdalah": "18:19" },
+            "אשדוד": { "lat": 31.8010, "lon": 34.6437, "candleLighting": "17:22", "havdalah": "18:20" },
+            "מודיעין": { "lat": 31.9028, "lon": 35.0173, "candleLighting": "17:14", "havdalah": "18:18" },
+            "עפולה": { "lat": 32.6011, "lon": 35.3039, "candleLighting": "17:13", "havdalah": "18:17" },
+            "פתח תקווה": { "lat": 32.0836, "lon": 34.8741, "candleLighting": "17:21", "havdalah": "18:19" },
+            "נהריה": { "lat": 33.0127, "lon": 35.0942, "candleLighting": "17:11", "havdalah": "18:18" },
+            "קרית גת": { "lat": 31.5120, "lon": 34.7589, "candleLighting": "17:13", "havdalah": "18:19" },
+            "בית שמש": { "lat": 31.7451, "lon": 34.9899, "candleLighting": "17:05", "havdalah": "18:19" },
+            "צפת": { "lat": 32.9707, "lon": 35.4997, "candleLighting": "17:10", "havdalah": "18:17" },
+            "כפר סבא": { "lat": 32.1820, "lon": 34.9020, "candleLighting": "17:21", "havdalah": "18:19" },
+            "אופקים": { "lat": 31.2610, "lon": 34.6373, "candleLighting": "17:15", "havdalah": "18:20" },
+            "חולון": { "lat": 32.013, "lon": 34.7703, "candleLighting": "17:22", "havdalah": "18:19" },
+            "ראשון לציון": { "lat": 31.9715, "lon": 34.7923, "candleLighting": "17:22", "havdalah": "18:19" },
+            "דימונה": { "lat": 30.5959, "lon": 35.0242, "candleLighting": "17:16", "havdalah": "18:18" },
+            "עכו": { "lat": 33.0024, "lon": 35.0834, "candleLighting": "17:12", "havdalah": "18:18" },
+            "רמלה": { "lat": 31.9303, "lon": 34.8662, "candleLighting": "17:21", "havdalah": "18:19" },
+            "בית שאן": { "lat": 32.4974, "lon": 35.4947, "candleLighting": "17:09", "havdalah": "18:17" },
+            "רעננה": { "lat": 32.1851, "lon": 34.8700, "candleLighting": "17:21", "havdalah": "18:19" },
+            "ערד": { "lat": 31.2612, "lon": 35.2075, "candleLighting": "17:15", "havdalah": "18:18" },
+            "בני ברק": { "lat": 32.0736, "lon": 34.8324, "candleLighting": "17:20", "havdalah": "18:20" },
+            "לוד": { "lat": 31.9483, "lon": 34.8961, "candleLighting": "17:12", "havdalah": "18:20" },
+            "מודיעין עילית": { "lat": 31.9343, "lon": 35.0151, "candleLighting": "17:12", "havdalah": "18:19" },
+            "ראש העין": { "lat": 32.0710, "lon": 34.8937, "candleLighting": "17:12", "havdalah": "18:19" },
+            "יבנה": { "lat": 31.8723, "lon": 34.7483, "candleLighting": "17:13", "havdalah": "18:20" },
+            "כרמיאל": { "lat": 32.9077, "lon": 35.2956, "candleLighting": "17:10", "havdalah": "18:18" },
+            "נתיבות": { "lat": 31.4973, "lon": 34.5931, "candleLighting": "17:14", "havdalah": "18:21" },
+            "מעלה אדומים": { "lat": 31.7830, "lon": 35.2653, "candleLighting": "17:11", "havdalah": "18:18" },
+            "שדרות": { "lat": 31.5473, "lon": 34.5931, "candleLighting": "17:14", "havdalah": "18:21" },
+            "גבעת שמואל": { "lat": 32.0637, "lon": 34.8182, "candleLighting": "17:12", "havdalah": "18:20" },
+            "קריית שמונה": { "lat": 33.2070, "lon": 35.5721, "candleLighting": "17:09", "havdalah": "18:17" },
+            "רמת גן": { "lat": 32.0731, "lon": 34.8153, "candleLighting": "17:21", "havdalah": "18:20" },
+            "בת ים": { "lat": 32.013, "lon": 34.7514, "candleLighting": "17:13", "havdalah": "18:21" },
+            "הרצליה": { "lat": 32.1643, "lon": 34.8327, "candleLighting": "17:12", "havdalah": "18:20" }
         };
 
-        function populateCitySelect() {
-            const select = document.getElementById("citySelect");
-            select.innerHTML = Object.keys(shabbatTimes).map(city => `<option value="${city}">${city}</option>`).join("");
-        }
-
-        function savePreferredCity() {
-            const selectedCity = document.getElementById("citySelect").value;
-            localStorage.setItem("preferredCity", selectedCity);
-            displayShabbatTimes(selectedCity);
-        }
-
-        function displayShabbatTimes(city) {
-            const times = shabbatTimes[city];
-            document.getElementById("result").innerHTML = `
-                <div class="result-box">
-                    <h2>${city}</h2>
-                    <p><strong>כניסת שבת:</strong> ${times["כניסה"]}</p>
-                    <p><strong>יציאת שבת:</strong> ${times["יציאה"]}</p>
-                </div>`;
-            startCountdown(times["כניסה"]);
-        }
-
-        function loadPreferredCity() {
-            const savedCity = localStorage.getItem("preferredCity");
-            if (savedCity && shabbatTimes[savedCity]) {
-                document.getElementById("citySelect").value = savedCity;
-                displayShabbatTimes(savedCity);
+        // חיפוש בזמן אמת של עיר
+        function searchCity() {
+            const searchTerm = document.getElementById("citySearch").value.toLowerCase();
+            const suggestionsList = document.getElementById("suggestionsList");
+            suggestionsList.innerHTML = "";
+            if (searchTerm.length > 0) {
+                const matches = Object.keys(cities).filter(city => city.toLowerCase().includes(searchTerm));
+                matches.forEach(city => {
+                    const li = document.createElement("li");
+                    li.textContent = city;
+                    li.onclick = function() {
+                        displayShabbatTimes(city);
+                    };
+                    suggestionsList.appendChild(li);
+                });
+                suggestionsList.style.display = matches.length > 0 ? "block" : "none";
             } else {
-                displayShabbatTimes(Object.keys(shabbatTimes)[0]);
+                suggestionsList.style.display = "none";
             }
         }
 
-        function startCountdown(shabbatTime) {
-            function updateCountdown() {
-                const now = new Date();
-                let nextShabbat = new Date();
-                const [hours, minutes] = shabbatTime.split(":").map(Number);
-                nextShabbat.setHours(hours, minutes, 0, 0);
-
-                while (nextShabbat.getDay() !== 5) {
-                    nextShabbat.setDate(nextShabbat.getDate() + 1);
-                }
-
-                if (now > nextShabbat) {
-                    nextShabbat.setDate(nextShabbat.getDate() + 7);
-                }
-
-                const diff = nextShabbat - now;
-                const hoursLeft = Math.floor((diff / (1000 * 60 * 60)) % 24);
-                const minutesLeft = Math.floor((diff / (1000 * 60)) % 60);
-                const secondsLeft = Math.floor((diff / 1000) % 60);
-                document.getElementById("countdown").innerText = `עוד ${hoursLeft} שעות, ${minutesLeft} דקות ו-${secondsLeft} שניות`;
-                setTimeout(updateCountdown, 1000);
-            }
-            updateCountdown();
+        // הצגת זמני שבת של העיר
+        function displayShabbatTimes(city) {
+            const times = cities[city];
+            const shabbatTimes = document.getElementById("shabbatTimes");
+            shabbatTimes.innerHTML = `
+                <p><strong>זמני שבת בעיר ${city}:</strong></p>
+                <p>הדלקת נרות: ${times.candleLighting}</p>
+                <p>הבדלה: ${times.havdalah}</p>
+            `;
+            document.getElementById("citySelect").style.display = "none"; // מסתיר את תיבת החיפוש
         }
 
-        populateCitySelect();
-        loadPreferredCity();
+        // הצגת העיר אם לא נמצאה אוטומטית
+        function setCityManually() {
+            document.getElementById("citySelect").style.display = "block";
+        }
     </script>
 </body>
 </html>
