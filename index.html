@@ -1,157 +1,294 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>שבת ולימוד תורה</title>
+    <title>Vocabulary Trainer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            color: #333;
+            font-family: 'Josefin Sans', sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        h1, h2 {
-            color: #444;
-        }
-        .menu {
-            margin-bottom: 20px;
-        }
-        .menu a {
-            margin: 10px;
-            text-decoration: none;
-            color: white;
+        .header {
+            padding: 20px;
             background-color: #007BFF;
-            padding: 10px 20px;
-            border-radius: 5px;
-            display: inline-block;
+            color: white;
+            position: relative;
         }
-        .menu a:hover {
+        .home-btn {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            background-color: #ff4b5c;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .container {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .btn:hover {
             background-color: #0056b3;
         }
-        .shabbat-times {
-            margin-top: 20px;
+        .hidden {
+            display: none;
         }
-        .city-select {
-            margin-top: 20px;
+        .input-area {
+            width: 80%;
+            height: 150px;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
         }
-        .city-suggestions {
-            list-style-type: none;
-            padding: 0;
-            margin: 10px 0;
-            max-height: 200px;
-            overflow-y: auto;
+        .animated {
+            animation-duration: 0.5s;
+            animation-timing-function: ease-out;
         }
-        .city-suggestions li {
-            padding: 8px;
-            cursor: pointer;
-            background-color: #f1f1f1;
+        .fadeIn {
+            animation-name: fadeIn;
         }
-        .city-suggestions li:hover {
-            background-color: #ddd;
+        .fadeOut {
+            animation-name: fadeOut;
+        }
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>שבת ולימוד תורה</h1>
-    <div class="menu">
-        <a href="shabbat-times.html">זמני שבת</a>
-        <a href="torah-lessons.html">שיעורי תורה</a>
+    <div class="header">
+        <h1>Vocabulary Trainer</h1>
+        <button class="home-btn" onclick="showHome()">Home</button>
+    </div>
+    
+    <div id="homeScreen" class="container animated fadeIn">
+        <button class="btn" onclick="showCreateListScreen()">Create New List</button>
+        <button class="btn" onclick="showSavedLists()">View Saved Lists</button>
+        <div id="savedListsContainer" class="hidden"></div>
+    </div>
+    
+    <div id="createListScreen" class="container hidden animated fadeIn">
+        <h2>Enter List Name</h2>
+        <input type="text" id="listNameInput" placeholder="List Name">
+        <button class="btn" onclick="createList()">Create List</button>
+    </div>
+    
+    <div id="addWordsScreen" class="container hidden animated fadeIn">
+        <h2>Add Words to Your List</h2>
+        <textarea id="wordInput" class="input-area" placeholder="Enter words and definitions..."></textarea>
+        <button class="btn" onclick="saveAndStartTest()">Save & Start Test</button>
+    </div>
+    
+    <div id="quizScreen" class="container hidden animated fadeIn">
+        <h2 id="quizQuestion"></h2>
+        <input type="text" id="userAnswer" placeholder="Your answer">
+        <button class="btn" onclick="checkAnswer()">Submit</button>
+        <p id="feedback"></p>
     </div>
 
-    <h2>זמני שבת לפי מיקום</h2>
-    <div id="shabbatTimes">טוען נתונים...</div>
-
-    <div class="city-select" id="citySelect" style="display:none;">
-        <h3>לא מרוצה מהמיקום? בחר ידנית:</h3>
-        <input type="text" id="citySearch" placeholder="חפש עיר" oninput="searchCity()" autocomplete="off">
-        <ul id="suggestionsList" class="city-suggestions" style="display:none;"></ul>
+    <div id="resultScreen" class="container hidden animated fadeIn">
+        <h2>Test Completed!</h2>
+        <p id="resultFeedback"></p>
+        <button class="btn" onclick="showHome()">Back to Home</button>
     </div>
-
+    
     <script>
-        const cities = {
-            "ירושלים": { "lat": 31.7683, "lon": 35.2137, "candleLighting": "17:06", "havdalah": "18:18" },
-            "נתניה": { "lat": 32.3218, "lon": 34.8530, "candleLighting": "17:21", "havdalah": "18:19" },
-            "תל אביב": { "lat": 32.0853, "lon": 34.7818, "candleLighting": "17:22", "havdalah": "18:19" },
-            "חדרה": { "lat": 32.4360, "lon": 34.9180, "candleLighting": "17:13", "havdalah": "18:19" },
-            "חיפה": { "lat": 32.7940, "lon": 34.9896, "candleLighting": "17:15", "havdalah": "18:18" },
-            "טבריה": { "lat": 32.7993, "lon": 35.5310, "candleLighting": "17:09", "havdalah": "18:16" },
-            "באר שבע": { "lat": 31.2518, "lon": 34.7913, "candleLighting": "17:16", "havdalah": "18:19" },
-            "אשקלון": { "lat": 31.6561, "lon": 34.5704, "candleLighting": "17:15", "havdalah": "18:20" },
-            "רחובות": { "lat": 31.8927, "lon": 34.8117, "candleLighting": "17:16", "havdalah": "18:14" },
-            "אילת": { "lat": 29.5581, "lon": 34.9482, "candleLighting": "17:15", "havdalah": "18:19" },
-            "אשדוד": { "lat": 31.8010, "lon": 34.6437, "candleLighting": "17:22", "havdalah": "18:20" },
-            "מודיעין": { "lat": 31.9028, "lon": 35.0173, "candleLighting": "17:14", "havdalah": "18:18" },
-            "עפולה": { "lat": 32.6011, "lon": 35.3039, "candleLighting": "17:13", "havdalah": "18:17" },
-            "פתח תקווה": { "lat": 32.0836, "lon": 34.8741, "candleLighting": "17:21", "havdalah": "18:19" },
-            "נהריה": { "lat": 33.0127, "lon": 35.0942, "candleLighting": "17:11", "havdalah": "18:18" },
-            "קרית גת": { "lat": 31.5120, "lon": 34.7589, "candleLighting": "17:13", "havdalah": "18:19" },
-            "בית שמש": { "lat": 31.7451, "lon": 34.9899, "candleLighting": "17:05", "havdalah": "18:19" },
-            "צפת": { "lat": 32.9707, "lon": 35.4997, "candleLighting": "17:10", "havdalah": "18:17" },
-            "כפר סבא": { "lat": 32.1820, "lon": 34.9020, "candleLighting": "17:21", "havdalah": "18:19" },
-            "אופקים": { "lat": 31.2610, "lon": 34.6373, "candleLighting": "17:15", "havdalah": "18:20" },
-            "חולון": { "lat": 32.013, "lon": 34.7703, "candleLighting": "17:22", "havdalah": "18:19" },
-            "ראשון לציון": { "lat": 31.9715, "lon": 34.7923, "candleLighting": "17:22", "havdalah": "18:19" },
-            "דימונה": { "lat": 30.5959, "lon": 35.0242, "candleLighting": "17:16", "havdalah": "18:18" },
-            "עכו": { "lat": 33.0024, "lon": 35.0834, "candleLighting": "17:12", "havdalah": "18:18" },
-            "רמלה": { "lat": 31.9303, "lon": 34.8662, "candleLighting": "17:21", "havdalah": "18:19" },
-            "בית שאן": { "lat": 32.4974, "lon": 35.4947, "candleLighting": "17:09", "havdalah": "18:17" },
-            "רעננה": { "lat": 32.1851, "lon": 34.8700, "candleLighting": "17:21", "havdalah": "18:19" },
-            "ערד": { "lat": 31.2612, "lon": 35.2075, "candleLighting": "17:15", "havdalah": "18:18" },
-            "בני ברק": { "lat": 32.0736, "lon": 34.8324, "candleLighting": "17:20", "havdalah": "18:20" },
-            "לוד": { "lat": 31.9483, "lon": 34.8961, "candleLighting": "17:12", "havdalah": "18:20" },
-            "מודיעין עילית": { "lat": 31.9343, "lon": 35.0151, "candleLighting": "17:12", "havdalah": "18:19" },
-            "ראש העין": { "lat": 32.0710, "lon": 34.8937, "candleLighting": "17:12", "havdalah": "18:19" },
-            "יבנה": { "lat": 31.8723, "lon": 34.7483, "candleLighting": "17:13", "havdalah": "18:20" },
-            "כרמיאל": { "lat": 32.9077, "lon": 35.2956, "candleLighting": "17:10", "havdalah": "18:18" },
-            "נתיבות": { "lat": 31.4973, "lon": 34.5931, "candleLighting": "17:14", "havdalah": "18:21" },
-            "מעלה אדומים": { "lat": 31.7830, "lon": 35.2653, "candleLighting": "17:11", "havdalah": "18:18" },
-            "שדרות": { "lat": 31.5473, "lon": 34.5931, "candleLighting": "17:14", "havdalah": "18:21" },
-            "גבעת שמואל": { "lat": 32.0637, "lon": 34.8182, "candleLighting": "17:12", "havdalah": "18:20" },
-            "קריית שמונה": { "lat": 33.2070, "lon": 35.5721, "candleLighting": "17:09", "havdalah": "18:17" },
-            "רמת גן": { "lat": 32.0731, "lon": 34.8153, "candleLighting": "17:21", "havdalah": "18:20" },
-            "בת ים": { "lat": 32.013, "lon": 34.7514, "candleLighting": "17:13", "havdalah": "18:21" },
-            "הרצליה": { "lat": 32.1643, "lon": 34.8327, "candleLighting": "17:12", "havdalah": "18:20" }
-        };
+        let currentList = {};
+        let words = [];
+        let currentWordIndex = 0;
+        let correctAnswers = 0;
+        let savedLists = JSON.parse(localStorage.getItem("savedLists")) || [];
 
-        // חיפוש בזמן אמת של עיר
-        function searchCity() {
-            const searchTerm = document.getElementById("citySearch").value.toLowerCase();
-            const suggestionsList = document.getElementById("suggestionsList");
-            suggestionsList.innerHTML = "";
-            if (searchTerm.length > 0) {
-                const matches = Object.keys(cities).filter(city => city.toLowerCase().includes(searchTerm));
-                matches.forEach(city => {
-                    const li = document.createElement("li");
-                    li.textContent = city;
-                    li.onclick = function() {
-                        displayShabbatTimes(city);
-                    };
-                    suggestionsList.appendChild(li);
-                });
-                suggestionsList.style.display = matches.length > 0 ? "block" : "none";
-            } else {
-                suggestionsList.style.display = "none";
+        // אם הנתונים אינם מערך, להמיר אותם למערך מתאים
+        if (!Array.isArray(savedLists)) {
+            console.warn("Fixing savedLists format:", savedLists);
+            savedLists = [];
+            localStorage.setItem("savedLists", JSON.stringify(savedLists));
+        }
+
+        // Show Home screen
+        function showHome() {
+            document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
+            const homeScreen = document.getElementById("homeScreen");
+            homeScreen.classList.remove("hidden");
+            homeScreen.classList.add("animated", "fadeIn");
+        }
+
+        // Show Create List screen
+        function showCreateListScreen() {
+            document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
+            const createListScreen = document.getElementById("createListScreen");
+            createListScreen.classList.remove("hidden");
+            createListScreen.classList.add("animated", "fadeIn");
+        }
+
+        // Create a new list
+        function createList() {
+            const listName = document.getElementById("listNameInput").value.trim();
+            if (!listName) {
+                alert("Please enter a list name");
+                return;
+            }
+            currentList = { name: listName, words: [] };
+            document.getElementById("createListScreen").classList.add("hidden");
+            const addWordsScreen = document.getElementById("addWordsScreen");
+            addWordsScreen.classList.remove("hidden");
+            addWordsScreen.classList.add("animated", "fadeIn");
+        }
+
+        // Save the words and start the test
+        function saveAndStartTest() {
+            try {
+                const inputText = document.getElementById("wordInput").value.trim();
+                words = inputText.split('\n').map(line => {
+                    let parts = line.split(/[:\-]/);
+                    return parts.length === 2 ? { word: parts[0].trim(), definition: parts[1].trim() } : null;
+                }).filter(item => item);
+
+                if (words.length === 0) {
+                    alert("Please enter valid words and definitions.");
+                    return;
+                }
+
+                currentList.words = words;
+                savedLists.push(currentList);
+                localStorage.setItem("savedLists", JSON.stringify(savedLists));
+
+                alert("List saved successfully! Starting the test...");
+                showHome();
+                startTest();
+            } catch (error) {
+                console.error("Error in saveAndStartTest:", error.message, error.stack);
             }
         }
 
-        // הצגת זמני שבת של העיר
-        function displayShabbatTimes(city) {
-            const times = cities[city];
-            const shabbatTimes = document.getElementById("shabbatTimes");
-            shabbatTimes.innerHTML = `
-                <p><strong>זמני שבת בעיר ${city}:</strong></p>
-                <p>הדלקת נרות: ${times.candleLighting}</p>
-                <p>הבדלה: ${times.havdalah}</p>
-            `;
-            document.getElementById("citySelect").style.display = "none"; // מסתיר את תיבת החיפוש
+        // Start the test
+        function startTest() {
+            if (!words.length) {
+                alert("No words in the list to test.");
+                return;
+            }
+            document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
+            const quizScreen = document.getElementById("quizScreen");
+            quizScreen.classList.remove("hidden");
+            quizScreen.classList.add("animated", "fadeIn");
+            currentWordIndex = 0;
+            correctAnswers = 0; // Reset correct answers counter
+            showNextQuestion();
         }
 
-        // הצגת העיר אם לא נמצאה אוטומטית
-        function setCityManually() {
-            document.getElementById("citySelect").style.display = "block";
+        // Show the next question
+        function showNextQuestion() {
+            if (currentWordIndex >= words.length) {
+                showResult();
+                return;
+            }
+            document.getElementById("quizQuestion").innerText = `What is the definition of: '${words[currentWordIndex].word}'?`;
+            document.getElementById("userAnswer").value = "";
+            document.getElementById("feedback").innerText = "";
+        }
+
+        // Check the user's answer
+        function checkAnswer() {
+            const userAnswer = document.getElementById("userAnswer").value.trim();
+            const correctAnswer = words[currentWordIndex].definition;
+            if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                correctAnswers++;
+                document.getElementById("feedback").innerHTML = "<span style='color:green'>Correct!</span>";
+            } else {
+                document.getElementById("feedback").innerHTML = `<span style='color:red'>Wrong! The correct answer is: ${correctAnswer}</span>`;
+            }
+            currentWordIndex++;
+            setTimeout(showNextQuestion, 1500);
+        }
+
+        // Show result at the end of the test
+        function showResult() {
+            document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
+            const resultScreen = document.getElementById("resultScreen");
+            resultScreen.classList.remove("hidden");
+            resultScreen.classList.add("animated", "fadeIn");
+
+            const resultFeedback = document.getElementById("resultFeedback");
+            resultFeedback.innerHTML = `You answered ${correctAnswers} out of ${words.length} questions correctly.`;
+        }
+
+        // Show saved lists
+        function showSavedLists() {
+            try {
+                const container = document.getElementById("savedListsContainer");
+                container.innerHTML = "";
+                container.classList.remove("hidden");
+
+                console.log("Saved lists:", savedLists);
+
+                if (savedLists.length === 0) {
+                    container.innerHTML = "<p>No saved lists found.</p>";
+                    return;
+                }
+
+                savedLists.forEach((list, index) => {
+                    const btn = document.createElement("button");
+                    btn.className = "btn";
+                    btn.innerText = list.name;
+                    btn.onclick = function () { loadListForTest(index); };
+                    container.appendChild(btn);
+                });
+
+            } catch (error) {
+                console.error("Error in showSavedLists:", error.message, error.stack);
+            }
+        }
+
+        // Load a saved list for the test
+        function loadListForTest(index) {
+            try {
+                currentList = savedLists[index];
+                words = currentList.words;
+                alert(`Loaded list: ${currentList.name}`);
+                startTest();
+            } catch (error) {
+                console.error("Error in loadListForTest:", error.message, error.stack);
+            }
         }
     </script>
 </body>
