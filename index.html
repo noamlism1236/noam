@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocabulary Trainer</title>
     <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Josefin Sans', sans-serif;
@@ -22,18 +21,6 @@
             padding: 20px;
             background-color: #007BFF;
             color: white;
-            position: relative;
-        }
-        .home-btn {
-            position: absolute;
-            left: 10px;
-            top: 10px;
-            background-color: #ff4b5c;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
         }
         .container {
             flex: 1;
@@ -52,116 +39,90 @@
             cursor: pointer;
             margin: 10px;
         }
-        .btn:hover {
-            background-color: #0056b3;
-        }
         .hidden {
             display: none;
         }
-        .input-area {
-            width: 80%;
-            height: 150px;
+        .input-large {
+            width: 90%;
+            height: 300px;
             font-size: 18px;
             padding: 10px;
             border-radius: 5px;
             border: 1px solid #ccc;
-        }
-        .animated {
-            animation-duration: 0.5s;
-            animation-timing-function: ease-out;
-        }
-        .fadeIn {
-            animation-name: fadeIn;
-        }
-        .fadeOut {
-            animation-name: fadeOut;
-        }
-        @keyframes fadeIn {
-            0% {
-                opacity: 0;
-            }
-            100% {
-                opacity: 1;
-            }
-        }
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Vocabulary Trainer</h1>
-        <button class="home-btn" onclick="showHome()">Home</button>
     </div>
-    
-    <div id="homeScreen" class="container animated fadeIn">
+
+    <div id="homeScreen" class="container">
         <button class="btn" onclick="showCreateListScreen()">Create New List</button>
         <button class="btn" onclick="showSavedLists()">View Saved Lists</button>
         <div id="savedListsContainer" class="hidden"></div>
     </div>
     
-    <div id="createListScreen" class="container hidden animated fadeIn">
+    <div id="createListScreen" class="container hidden">
         <h2>Enter List Name</h2>
         <input type="text" id="listNameInput" placeholder="List Name">
         <button class="btn" onclick="createList()">Create List</button>
     </div>
     
-    <div id="addWordsScreen" class="container hidden animated fadeIn">
+    <div id="addWordsScreen" class="container hidden">
         <h2>Add Words to Your List</h2>
-        <textarea id="wordInput" class="input-area" placeholder="Enter words and definitions..."></textarea>
+        <textarea id="wordInput" class="input-large" placeholder="word: definition OR word - definition"></textarea>
         <button class="btn" onclick="saveAndStartTest()">Save & Start Test</button>
+        <button class="btn hidden" id="shareListBtn" onclick="shareList()">Share List</button>
     </div>
-    
-    <div id="quizScreen" class="container hidden animated fadeIn">
-        <h2 id="quizQuestion"></h2>
-        <input type="text" id="userAnswer" placeholder="Your answer">
+
+    <div id="testScreen" class="container hidden">
+        <h2 id="questionText"></h2>
+        <input type="text" id="answerInput" placeholder="Enter your answer">
         <button class="btn" onclick="checkAnswer()">Submit</button>
         <p id="feedback"></p>
     </div>
 
-    <div id="resultScreen" class="container hidden animated fadeIn">
-        <h2>Test Completed!</h2>
-        <p id="resultFeedback"></p>
+    <div id="resultScreen" class="container hidden">
+        <h2 id="resultText"></h2>
         <button class="btn" onclick="showHome()">Back to Home</button>
     </div>
-    
+
     <script>
-        let currentList = {};
-        let words = [];
-        let currentWordIndex = 0;
+        let currentList = null;
+        let currentIndex = 0;
         let correctAnswers = 0;
-        let savedLists = JSON.parse(localStorage.getItem("savedLists")) || [];
+        let wordPairs = [];
 
-        // אם הנתונים אינם מערך, להמיר אותם למערך מתאים
-        if (!Array.isArray(savedLists)) {
-            console.warn("Fixing savedLists format:", savedLists);
-            savedLists = [];
-            localStorage.setItem("savedLists", JSON.stringify(savedLists));
-        }
-
-        // Show Home screen
         function showHome() {
-            document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
-            const homeScreen = document.getElementById("homeScreen");
-            homeScreen.classList.remove("hidden");
-            homeScreen.classList.add("animated", "fadeIn");
+            hideAllScreens();
+            document.getElementById("homeScreen").classList.remove("hidden");
         }
 
-        // Show Create List screen
         function showCreateListScreen() {
-            document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
-            const createListScreen = document.getElementById("createListScreen");
-            createListScreen.classList.remove("hidden");
-            createListScreen.classList.add("animated", "fadeIn");
+            hideAllScreens();
+            document.getElementById("createListScreen").classList.remove("hidden");
         }
 
-        // Create a new list
+        function showSavedLists() {
+            const savedLists = JSON.parse(localStorage.getItem('savedLists') || '[]');
+            const container = document.getElementById('savedListsContainer');
+            container.innerHTML = '';
+            if (savedLists.length > 0) {
+                savedLists.forEach(list => {
+                    const listButton = document.createElement('button');
+                    listButton.classList.add('btn');
+                    listButton.textContent = list.name;
+                    listButton.onclick = () => startTest(list);
+                    container.appendChild(listButton);
+                });
+                container.classList.remove('hidden');
+            } else {
+                container.innerHTML = '<p>No saved lists</p>';
+                container.classList.remove('hidden');
+            }
+        }
+
         function createList() {
             const listName = document.getElementById("listNameInput").value.trim();
             if (!listName) {
@@ -169,127 +130,88 @@
                 return;
             }
             currentList = { name: listName, words: [] };
-            document.getElementById("createListScreen").classList.add("hidden");
-            const addWordsScreen = document.getElementById("addWordsScreen");
-            addWordsScreen.classList.remove("hidden");
-            addWordsScreen.classList.add("animated", "fadeIn");
+            hideAllScreens();
+            document.getElementById("addWordsScreen").classList.remove("hidden");
         }
 
-        // Save the words and start the test
         function saveAndStartTest() {
-            try {
-                const inputText = document.getElementById("wordInput").value.trim();
-                words = inputText.split('\n').map(line => {
-                    let parts = line.split(/[:\-]/);
-                    return parts.length === 2 ? { word: parts[0].trim(), definition: parts[1].trim() } : null;
-                }).filter(item => item);
+            const wordsText = document.getElementById("wordInput").value.trim();
+            const words = wordsText.split("\n").map(line => {
+                const parts = line.split(/[:\-]/).map(p => p.trim());
+                return parts.length === 2 ? { word: parts[0], definition: parts[1] } : null;
+            }).filter(item => item !== null);
 
-                if (words.length === 0) {
-                    alert("Please enter valid words and definitions.");
-                    return;
-                }
-
-                currentList.words = words;
-                savedLists.push(currentList);
-                localStorage.setItem("savedLists", JSON.stringify(savedLists));
-
-                alert("List saved successfully! Starting the test...");
-                showHome();
-                startTest();
-            } catch (error) {
-                console.error("Error in saveAndStartTest:", error.message, error.stack);
-            }
-        }
-
-        // Start the test
-        function startTest() {
-            if (!words.length) {
-                alert("No words in the list to test.");
+            if (words.length === 0) {
+                alert("Please enter words correctly.");
                 return;
             }
-            document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
-            const quizScreen = document.getElementById("quizScreen");
-            quizScreen.classList.remove("hidden");
-            quizScreen.classList.add("animated", "fadeIn");
-            currentWordIndex = 0;
-            correctAnswers = 0; // Reset correct answers counter
+
+            currentList.words = words;
+            const savedLists = JSON.parse(localStorage.getItem('savedLists') || '[]');
+            savedLists.push(currentList);
+            localStorage.setItem('savedLists', JSON.stringify(savedLists));
+
+            document.getElementById("shareListBtn").classList.remove("hidden");
+            startTest(currentList);
+        }
+
+        function startTest(list) {
+            currentList = list;
+            wordPairs = [...list.words];
+            currentIndex = 0;
+            correctAnswers = 0;
+            hideAllScreens();
             showNextQuestion();
         }
 
-        // Show the next question
         function showNextQuestion() {
-            if (currentWordIndex >= words.length) {
-                showResult();
+            if (currentIndex >= wordPairs.length) {
+                document.getElementById("resultText").innerText = `You got ${correctAnswers} out of ${wordPairs.length} correct!`;
+                hideAllScreens();
+                document.getElementById("resultScreen").classList.remove("hidden");
                 return;
             }
-            document.getElementById("quizQuestion").innerText = `What is the definition of: '${words[currentWordIndex].word}'?`;
-            document.getElementById("userAnswer").value = "";
-            document.getElementById("feedback").innerText = "";
+
+            document.getElementById("questionText").innerText = `What is the definition of: ${wordPairs[currentIndex].word}?`;
+            document.getElementById("answerInput").value = '';
+            document.getElementById("feedback").innerText = '';
+            hideAllScreens();
+            document.getElementById("testScreen").classList.remove("hidden");
         }
 
-        // Check the user's answer
         function checkAnswer() {
-            const userAnswer = document.getElementById("userAnswer").value.trim();
-            const correctAnswer = words[currentWordIndex].definition;
+            const userAnswer = document.getElementById("answerInput").value.trim();
+            const correctAnswer = wordPairs[currentIndex].definition;
             if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
                 correctAnswers++;
-                document.getElementById("feedback").innerHTML = "<span style='color:green'>Correct!</span>";
+                document.getElementById("feedback").innerText = "Correct!";
             } else {
-                document.getElementById("feedback").innerHTML = `<span style='color:red'>Wrong! The correct answer is: ${correctAnswer}</span>`;
+                document.getElementById("feedback").innerText = `Incorrect! Correct answer: ${correctAnswer}`;
             }
-            currentWordIndex++;
-            setTimeout(showNextQuestion, 1500);
+            currentIndex++;
+            setTimeout(showNextQuestion, 1000);
         }
 
-        // Show result at the end of the test
-        function showResult() {
+        function shareList() {
+            const url = `${window.location.origin}${window.location.pathname}?list=${encodeURIComponent(currentList.name)}`;
+            prompt("Copy this link to share:", url);
+        }
+
+        function checkForSharedList() {
+            const params = new URLSearchParams(window.location.search);
+            const listName = params.get("list");
+            if (listName) {
+                const savedLists = JSON.parse(localStorage.getItem('savedLists') || '[]');
+                const list = savedLists.find(l => l.name === listName);
+                if (list) startTest(list);
+            }
+        }
+
+        function hideAllScreens() {
             document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
-            const resultScreen = document.getElementById("resultScreen");
-            resultScreen.classList.remove("hidden");
-            resultScreen.classList.add("animated", "fadeIn");
-
-            const resultFeedback = document.getElementById("resultFeedback");
-            resultFeedback.innerHTML = `You answered ${correctAnswers} out of ${words.length} questions correctly.`;
         }
 
-        // Show saved lists
-        function showSavedLists() {
-            try {
-                const container = document.getElementById("savedListsContainer");
-                container.innerHTML = "";
-                container.classList.remove("hidden");
-
-                console.log("Saved lists:", savedLists);
-
-                if (savedLists.length === 0) {
-                    container.innerHTML = "<p>No saved lists found.</p>";
-                    return;
-                }
-
-                savedLists.forEach((list, index) => {
-                    const btn = document.createElement("button");
-                    btn.className = "btn";
-                    btn.innerText = list.name;
-                    btn.onclick = function () { loadListForTest(index); };
-                    container.appendChild(btn);
-                });
-
-            } catch (error) {
-                console.error("Error in showSavedLists:", error.message, error.stack);
-            }
-        }
-
-        // Load a saved list for the test
-        function loadListForTest(index) {
-            try {
-                currentList = savedLists[index];
-                words = currentList.words;
-                alert(`Loaded list: ${currentList.name}`);
-                startTest();
-            } catch (error) {
-                console.error("Error in loadListForTest:", error.message, error.stack);
-            }
-        }
+        checkForSharedList();
     </script>
 </body>
 </html>
