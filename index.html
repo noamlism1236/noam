@@ -1,217 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary Trainer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Josefin Sans', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-            color: #333;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .header {
-            padding: 20px;
-            background-color: #007BFF;
-            color: white;
-        }
-        .container {
-            flex: 1;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn {
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px;
-        }
-        .hidden {
-            display: none;
-        }
-        .input-large {
-            width: 90%;
-            height: 300px;
-            font-size: 18px;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>וידאו עם הסתרה כל 2 שניות</title>
+  <style>
+    #video-container {
+      position: relative;
+      width: 640px;
+      max-width: 100%;
+    }
+
+    #video {
+      width: 100%;
+      height: auto;
+    }
+
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      color: white;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      opacity: 0.9;
+      z-index: 1;
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Vocabulary Trainer</h1>
-    </div>
 
-    <div id="homeScreen" class="container">
-        <button class="btn" onclick="showCreateListScreen()">Create New List</button>
-        <button class="btn" onclick="showSavedLists()">View Saved Lists</button>
-        <div id="savedListsContainer" class="hidden"></div>
-    </div>
-    
-    <div id="createListScreen" class="container hidden">
-        <h2>Enter List Name</h2>
-        <input type="text" id="listNameInput" placeholder="List Name">
-        <button class="btn" onclick="createList()">Create List</button>
-    </div>
-    
-    <div id="addWordsScreen" class="container hidden">
-        <h2>Add Words to Your List</h2>
-        <textarea id="wordInput" class="input-large" placeholder="word: definition OR word - definition"></textarea>
-        <button class="btn" onclick="saveAndStartTest()">Save & Start Test</button>
-        <button class="btn hidden" id="shareListBtn" onclick="shareList()">Share List</button>
-    </div>
+  <h2>העלה סרטון מהמכשיר</h2>
+  <input type="file" id="videoInput" accept="video/*"><br><br>
 
-    <div id="testScreen" class="container hidden">
-        <h2 id="questionText"></h2>
-        <input type="text" id="answerInput" placeholder="Enter your answer">
-        <button class="btn" onclick="checkAnswer()">Submit</button>
-        <p id="feedback"></p>
-    </div>
+  <div id="video-container">
+    <video id="video" controls></video>
+    <div id="overlay">תוכן מוסתר</div>
+  </div>
 
-    <div id="resultScreen" class="container hidden">
-        <h2 id="resultText"></h2>
-        <button class="btn" onclick="showHome()">Back to Home</button>
-    </div>
+  <script>
+    const videoInput = document.getElementById('videoInput');
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
 
-    <script>
-        let currentList = null;
-        let currentIndex = 0;
-        let correctAnswers = 0;
-        let wordPairs = [];
+    videoInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
 
-        function showHome() {
-            hideAllScreens();
-            document.getElementById("homeScreen").classList.remove("hidden");
-        }
+      const videoURL = URL.createObjectURL(file);
+      video.src = videoURL;
 
-        function showCreateListScreen() {
-            hideAllScreens();
-            document.getElementById("createListScreen").classList.remove("hidden");
-        }
+      // ודא שהסרטון טוען מחדש
+      video.load();
+    });
 
-        function showSavedLists() {
-            const savedLists = JSON.parse(localStorage.getItem('savedLists') || '[]');
-            const container = document.getElementById('savedListsContainer');
-            container.innerHTML = '';
-            if (savedLists.length > 0) {
-                savedLists.forEach(list => {
-                    const listButton = document.createElement('button');
-                    listButton.classList.add('btn');
-                    listButton.textContent = list.name;
-                    listButton.onclick = () => startTest(list);
-                    container.appendChild(listButton);
-                });
-                container.classList.remove('hidden');
-            } else {
-                container.innerHTML = '<p>No saved lists</p>';
-                container.classList.remove('hidden');
-            }
-        }
+    // ברגע שהסרטון מתחיל לנגן – מפעילים את הבדיקה
+    video.addEventListener('timeupdate', function () {
+      const time = Math.floor(video.currentTime);
+      // חסימה ל-2 שניות כל 4 שניות
+      if (time % 4 < 2) {
+        overlay.style.display = 'flex';
+      } else {
+        overlay.style.display = 'none';
+      }
+    });
+  </script>
 
-        function createList() {
-            const listName = document.getElementById("listNameInput").value.trim();
-            if (!listName) {
-                alert("Please enter a list name");
-                return;
-            }
-            currentList = { name: listName, words: [] };
-            hideAllScreens();
-            document.getElementById("addWordsScreen").classList.remove("hidden");
-        }
-
-        function saveAndStartTest() {
-            const wordsText = document.getElementById("wordInput").value.trim();
-            const words = wordsText.split("\n").map(line => {
-                const parts = line.split(/[:\-]/).map(p => p.trim());
-                return parts.length === 2 ? { word: parts[0], definition: parts[1] } : null;
-            }).filter(item => item !== null);
-
-            if (words.length === 0) {
-                alert("Please enter words correctly.");
-                return;
-            }
-
-            currentList.words = words;
-            const savedLists = JSON.parse(localStorage.getItem('savedLists') || '[]');
-            savedLists.push(currentList);
-            localStorage.setItem('savedLists', JSON.stringify(savedLists));
-
-            document.getElementById("shareListBtn").classList.remove("hidden");
-            startTest(currentList);
-        }
-
-        function startTest(list) {
-            currentList = list;
-            wordPairs = [...list.words];
-            currentIndex = 0;
-            correctAnswers = 0;
-            hideAllScreens();
-            showNextQuestion();
-        }
-
-        function showNextQuestion() {
-            if (currentIndex >= wordPairs.length) {
-                document.getElementById("resultText").innerText = `You got ${correctAnswers} out of ${wordPairs.length} correct!`;
-                hideAllScreens();
-                document.getElementById("resultScreen").classList.remove("hidden");
-                return;
-            }
-
-            document.getElementById("questionText").innerText = `What is the definition of: ${wordPairs[currentIndex].word}?`;
-            document.getElementById("answerInput").value = '';
-            document.getElementById("feedback").innerText = '';
-            hideAllScreens();
-            document.getElementById("testScreen").classList.remove("hidden");
-        }
-
-        function checkAnswer() {
-            const userAnswer = document.getElementById("answerInput").value.trim();
-            const correctAnswer = wordPairs[currentIndex].definition;
-            if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
-                correctAnswers++;
-                document.getElementById("feedback").innerText = "Correct!";
-            } else {
-                document.getElementById("feedback").innerText = `Incorrect! Correct answer: ${correctAnswer}`;
-            }
-            currentIndex++;
-            setTimeout(showNextQuestion, 1000);
-        }
-
-        function shareList() {
-            const url = `${window.location.origin}${window.location.pathname}?list=${encodeURIComponent(currentList.name)}`;
-            prompt("Copy this link to share:", url);
-        }
-
-        function checkForSharedList() {
-            const params = new URLSearchParams(window.location.search);
-            const listName = params.get("list");
-            if (listName) {
-                const savedLists = JSON.parse(localStorage.getItem('savedLists') || '[]');
-                const list = savedLists.find(l => l.name === listName);
-                if (list) startTest(list);
-            }
-        }
-
-        function hideAllScreens() {
-            document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
-        }
-
-        checkForSharedList();
-    </script>
 </body>
 </html>
