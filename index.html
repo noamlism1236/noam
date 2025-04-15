@@ -2,71 +2,168 @@
 <html lang="he">
 <head>
   <meta charset="UTF-8">
-  <title>וידאו עם הסתרה כל 2 שניות</title>
+  <title>בודק תוכן רגיש</title>
   <style>
-    #video-container {
-      position: relative;
-      width: 640px;
-      max-width: 100%;
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+      direction: rtl;
     }
-
     #video {
-      width: 100%;
-      height: auto;
+      width: 80%;
+      max-width: 600px;
+      display: none;
+      margin: 20px 0;
     }
-
     #overlay {
       position: absolute;
+      width: 80%;
+      max-width: 600px;
+      height: auto;
       top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: black;
+      left: 10%;
+      background: rgba(0, 0, 0, 0.8);
       color: white;
+      font-size: 24px;
       display: none;
       justify-content: center;
       align-items: center;
-      font-size: 24px;
-      opacity: 0.9;
-      z-index: 1;
+      z-index: 10;
+    }
+    #container {
+      position: relative;
+      display: inline-block;
+    }
+    #startBtn {
+      display: none;
+      padding: 10px 20px;
+      font-size: 18px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    #status, #scanTime {
+      margin-top: 10px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-  <h2>העלה סרטון מהמכשיר</h2>
-  <input type="file" id="videoInput" accept="video/*"><br><br>
+  <h1>בודק תוכן רגיש</h1>
+  <input type="file" id="fileInput" accept="video/*"><br>
+  <div id="status"></div>
+  <div id="scanTime"></div>
 
-  <div id="video-container">
+  <div id="container">
     <video id="video" controls></video>
-    <div id="overlay">תוכן מוסתר</div>
+    <div id="overlay">תוכן חסום</div>
   </div>
 
+  <button id="startBtn">הפעל סרטון סרוק</button>
+
   <script>
-    const videoInput = document.getElementById('videoInput');
-    const video = document.getElementById('video');
-    const overlay = document.getElementById('overlay');
+    const video = document.getElementById("video");
+    const overlay = document.getElementById("overlay");
+    const fileInput = document.getElementById("fileInput");
+    const status = document.getElementById("status");
+    const scanTime = document.getElementById("scanTime");
+    const startBtn = document.getElementById("startBtn");
 
-    videoInput.addEventListener('change', function () {
-      const file = this.files[0];
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let blockedTimes = [];
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
       if (!file) return;
-
-      const videoURL = URL.createObjectURL(file);
-      video.src = videoURL;
-
-      // ודא שהסרטון טוען מחדש
+      const url = URL.createObjectURL(file);
+      video.src = url;
       video.load();
+      video.controls = false;
+      video.style.display = "none";
+      startBtn.style.display = "none";
+      blockedTimes = [];
+      status.textContent = "מחשב סריקה...";
+      scanTime.textContent = "";
+
+      video.addEventListener("loadedmetadata", () => {
+        scanVideo();
+      }, { once: true });
     });
 
-    // ברגע שהסרטון מתחיל לנגן – מפעילים את הבדיקה
-    video.addEventListener('timeupdate', function () {
-      const time = Math.floor(video.currentTime);
-      // חסימה ל-2 שניות כל 4 שניות
-      if (time % 4 < 2) {
-        overlay.style.display = 'flex';
-      } else {
-        overlay.style.display = 'none';
+    async function scanVideo() {
+      let duration = video.duration;
+      let times = [];
+      for (let t = 0; t < duration; t += 2) times.push(t);
+
+      let remaining = times.length;
+      scanTime.textContent = `זמן משוער לסיום הסריקה: ${remaining} שניות`;
+
+      for (const time of times) {
+        await new Promise(resolve => {
+          video.currentTime = time;
+          const handler = async () => {
+            video.removeEventListener("seeked", handler);
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(async blob => {
+              if (!blob) {
+                resolve(); return;
+              }
+              const form = new FormData();
+              form.append("media", blob, "frame.jpg");
+              form.append("models", "nudity,violence,wad");
+              form.append("api_user", "544968815");
+              form.append("api_secret", "gyp4DCW8PkfVVXokqvQTvCxDdPyCK29P");
+
+              try {
+                const res = await fetch("https://api.sightengine.com/1.0/check.json", {
+                  method: "POST",
+                  body: form
+                });
+                const json = await res.json();
+                const bad = json.nudity?.raw > 0.7 ||
+                            json.nudity?.partial > 0.7 ||
+                            json.weapon > 0.5 ||
+                            json.blood > 0.5 ||
+                            json.violence > 0.5;
+                if (bad) blockedTimes.push([time, time + 2]);
+              } catch (e) {
+                console.error("API error", e);
+              }
+
+              remaining--;
+              if (remaining > 0) {
+                scanTime.textContent = `זמן משוער לסיום הסריקה: ${remaining} שניות`;
+              } else {
+                scanTime.textContent = "";
+                status.textContent = blockedTimes.length > 0
+                  ? "נמצאו קטעים בעייתיים שיחסמו אוטומטית"
+                  : "לא נמצאו קטעים בעייתיים";
+                video.style.display = "block";
+                video.controls = true;
+                startBtn.style.display = "inline-block";
+              }
+              resolve();
+            }, "image/jpeg");
+          };
+          video.addEventListener("seeked", handler);
+        });
       }
+    }
+
+    startBtn.addEventListener("click", () => {
+      video.play();
+    });
+
+    video.addEventListener("timeupdate", () => {
+      const time = video.currentTime;
+      const blocked = blockedTimes.some(([start, end]) => time >= start && time <= end);
+      overlay.style.display = blocked ? "flex" : "none";
     });
   </script>
 
