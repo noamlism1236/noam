@@ -50,6 +50,7 @@
     let blockedTimes = [];
     let isScanned = false;
 
+    // Triggered when user selects a video file
     fileInput.addEventListener("change", () => {
       const file = fileInput.files[0];
       if (!file) return;
@@ -57,19 +58,20 @@
       video.src = url;
       video.load();
       video.controls = false;
-      video.style.display = "none";  // No preview of the video
-      startBtn.style.display = "none";  // Hide play button until scanning is done
+      video.style.display = "none";  // Hide the video until scan completes
+      startBtn.style.display = "none";  // Hide play button until scan is complete
       blockedTimes = [];
       isScanned = false;
       status.textContent = "Scanning video...";
       scanTime.textContent = "";
-      overlay.style.display = "flex";
+      overlay.style.display = "flex";  // Show overlay until scan is complete
 
       video.addEventListener("loadedmetadata", () => {
         scanVideo();
       }, { once: true });
     });
 
+    // Function that scans the video by checking each 2-second frame
     async function scanVideo() {
       let duration = video.duration;
       let times = [];
@@ -123,7 +125,7 @@
                   ? "Problematic content detected. It will be automatically blocked."
                   : "No problematic content detected.";
                 startBtn.style.display = "inline-block";
-                overlay.style.display = "none";
+                overlay.style.display = "none";  // Hide the overlay after scan completes
                 isScanned = true;
               }
               resolve();
@@ -134,6 +136,7 @@
       }
     }
 
+    // Function to play the video after the scan is complete
     startBtn.addEventListener("click", () => {
       if (!isScanned) {
         alert("Please wait until the scan is complete.");
@@ -141,14 +144,15 @@
       }
 
       video.controls = true;
-      video.style.display = "block";  // Now the video is visible
+      video.style.display = "block";  // Show the video after scan is complete
       video.play();
     });
 
+    // Function to hide sensitive content
     video.addEventListener("timeupdate", () => {
       const time = video.currentTime;
       const blocked = blockedTimes.some(([start, end]) => time >= start && time <= end);
-      overlay.style.display = blocked ? "flex" : "none";  // Hide video content if blocked
+      overlay.style.display = blocked ? "flex" : "none";  // Block video content if it's in the sensitive time range
     });
   </script>
 </body>
