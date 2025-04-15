@@ -106,7 +106,7 @@
                             json.nudity?.partial > 0.7 ||
                             json.weapon > 0.5 ||
                             json.blood > 0.5 ||
-                            json.violence > 0.5;
+                            json.violence > 0.2;
                 if (bad) blockedTimes.push([time, time + 2]);
               } catch (e) {
                 console.error("API error", e);
