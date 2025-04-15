@@ -57,8 +57,8 @@
       video.src = url;
       video.load();
       video.controls = false;
-      video.style.display = "none";
-      startBtn.style.display = "none";
+      video.style.display = "none";  // No preview of the video
+      startBtn.style.display = "none";  // Hide play button until scanning is done
       blockedTimes = [];
       isScanned = false;
       status.textContent = "Scanning video...";
@@ -73,7 +73,7 @@
     async function scanVideo() {
       let duration = video.duration;
       let times = [];
-      for (let t = 0; t < duration; t += 2) times.push(t);
+      for (let t = 0; t < duration; t += 2) times.push(t);  // Scan every 2 seconds
 
       let remaining = times.length;
       scanTime.textContent = `Estimated time left: ${remaining} seconds`;
@@ -108,7 +108,7 @@
                             json.nudity?.partial > 0.7 ||
                             json.weapon > 0.5 ||
                             json.blood > 0.5 ||
-                            json.violence > 0.2;
+                            json.violence > 0.5;
                 if (bad) blockedTimes.push([time, time + 2]);
               } catch (e) {
                 console.error("API error", e);
@@ -141,14 +141,14 @@
       }
 
       video.controls = true;
-      video.style.display = "block";
+      video.style.display = "block";  // Now the video is visible
       video.play();
     });
 
     video.addEventListener("timeupdate", () => {
       const time = video.currentTime;
       const blocked = blockedTimes.some(([start, end]) => time >= start && time <= end);
-      overlay.style.display = blocked ? "flex" : "none";
+      overlay.style.display = blocked ? "flex" : "none";  // Hide video content if blocked
     });
   </script>
 </body>
