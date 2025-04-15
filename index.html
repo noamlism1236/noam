@@ -5,7 +5,7 @@
   <title>בודק תוכן רגיש</title>
   <style>
     body { font-family: Arial, sans-serif; direction: rtl; text-align: center; padding: 20px; }
-    #video { max-width: 100%; margin-top: 20px; }
+    #video { max-width: 100%; margin-top: 20px; display: none; }
     #overlay {
       position: absolute;
       top: 0; left: 0;
@@ -31,7 +31,7 @@
     <p id="scanTime"></p>
   </div>
   <div id="container">
-    <video id="video" controls style="display:none"></video>
+    <video id="video"></video>
     <div id="overlay">תוכן מוסתר</div>
   </div>
   <button id="startBtn">▶ הפעל סרטון סרוק</button>
@@ -106,7 +106,7 @@
                             json.nudity?.partial > 0.7 ||
                             json.weapon > 0.5 ||
                             json.blood > 0.5 ||
-                            json.violence > 0.2;
+                            json.violence > 0.5;
                 if (bad) blockedTimes.push([time, time + 2]);
               } catch (e) {
                 console.error("API error", e);
@@ -120,7 +120,6 @@
                 status.textContent = blockedTimes.length > 0
                   ? "נמצאו קטעים בעייתיים שיחסמו אוטומטית"
                   : "לא נמצאו קטעים בעייתיים";
-                video.style.display = "block";
                 startBtn.style.display = "inline-block";
                 overlay.style.display = "none";
               }
@@ -133,6 +132,8 @@
     }
 
     startBtn.addEventListener("click", () => {
+      video.controls = true;
+      video.style.display = "block";
       video.play();
     });
 
