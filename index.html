@@ -47,7 +47,7 @@
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
       recognition.lang = 'he-IL';
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.continuous = false;
     }
 
