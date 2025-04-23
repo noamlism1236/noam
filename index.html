@@ -1,108 +1,150 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>זיהוי דיבור בלייב</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        #transcript {
-            font-size: 24px;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>זיהוי דיבור</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      text-align: center;
+      margin: 50px;
+    }
+    #question {
+      font-size: 26px;
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+    #transcript {
+      font-size: 20px;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-    <h1>זיהוי דיבור בלייב</h1>
-    <div id="transcript"></div>
-    <script>
-        const transcriptDiv = document.getElementById('transcript');
-        let recognition;
-        let recognitionActive = false;
+  <div id="question"></div>
+  <div id="transcript"></div>
 
-        const contacts = ['נעם שינובר', 'יונתן רזאל', 'אייל גולן'];  // אנשי קשר במערכת
+  <script>
+    const questionDiv = document.getElementById("question");
+    const transcriptDiv = document.getElementById("transcript");
 
-        // פונקציה להשמעת צליל (עבור אישור וכישלון)
-        function playSound(success) {
-            const audio = new Audio(success ? 'https://www.soundjay.com/button/beep-07.wav' : 'https://www.soundjay.com/button/beep-08b.wav');
-            audio.play();
+    let recognition;
+    let isListeningForPhone = true;
+    let contactTranscript = '';
+
+    const contacts = ["נעם שינובר", "יונתן רזאל", "אייל גולן"];
+
+    function playSound(success) {
+      const audio = new Audio(success
+        ? "https://www.soundjay.com/button/beep-07.wav"
+        : "https://www.soundjay.com/button/beep-08b.wav");
+      audio.play();
+    }
+
+    function speakText(text) {
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "he-IL";
+      synth.speak(utterance);
+    }
+
+    function getLevenshteinDistance(a, b) {
+      const matrix = Array(b.length + 1).fill(null).map(() =>
+        Array(a.length + 1).fill(null));
+      for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+      for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+      for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+          const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+          matrix[j][i] = Math.min(
+            matrix[j][i - 1] + 1,
+            matrix[j - 1][i] + 1,
+            matrix[j - 1][i - 1] + indicator
+          );
         }
+      }
+      return matrix[b.length][a.length];
+    }
 
-        // הפעלת זיהוי דיבור
-        function startSpeechRecognition() {
-            if (!('webkitSpeechRecognition' in window)) {
-                alert("הדפדפן שלך לא תומך בזיהוי דיבור");
-                return;
-            }
-
-            recognition = new webkitSpeechRecognition();
-            recognition.lang = 'he-IL'; // הגדרת השפה לעברית
-            recognition.continuous = false; // לא לאפשר זיהוי רצוף
-            recognition.interimResults = true; // להציג תוצאות בזמן אמת
-            recognition.maxAlternatives = 1; // מקסימום אפשרויות תוצאה
-
-            recognition.onresult = function(event) {
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
-                }
-                transcriptDiv.textContent = 'הטקסט עד כה: ' + transcript;
-
-                // אם המילה "טלפון" מופיעה בטקסט, נשמיע צליל ונבקש שם איש קשר
-                if (transcript.includes("טלפון")) {
-                    playSound(true);  // צליל אישור
-                    transcriptDiv.textContent += "\n\nלמי תרצה להתקשר?";
-                    startListeningForContactName();
-                }
-            };
-
-            recognition.start();
+    function findMatchingContact(text) {
+      text = text.replace(/[.,!?]/g, '').trim();
+      const words = text.split(/\s+/);
+      for (let i = 0; i < words.length - 1; i++) {
+        const candidate = `${words[i]} ${words[i + 1]}`;
+        for (const contact of contacts) {
+          const distance = getLevenshteinDistance(contact, candidate);
+          const threshold = Math.floor(contact.length * 0.2);
+          if (distance <= threshold) return contact;
         }
+      }
+      return null;
+    }
 
-        // התחלת האזנה לשם איש קשר
-        function startListeningForContactName() {
-            recognitionActive = true;
-            setTimeout(() => {
-                recognition.stop();
-                const userName = transcriptDiv.textContent.split('הטקסט עד כה: ').pop();
-                const matchedContact = contacts.find(contact => getLevenshteinDistance(contact, userName) < contact.length * 0.2);
-                if (matchedContact) {
-                    playSound(true);  // צליל הצלחה
-                    transcriptDiv.textContent = `מתקשר ל: ${matchedContact}`;
-                } else {
-                    playSound(false);  // צליל כישלון
-                    transcriptDiv.textContent = 'נסה שוב';
-                    startListeningForContactName();
-                }
-            }, 8000);  // 8 שניות האזנה
+    function startContactRecognition() {
+      contactTranscript = '';
+      questionDiv.textContent = "למי תרצה להתקשר?";
+      transcriptDiv.textContent = "";
+
+      playSound(true);
+      speakText("למי תרצה להתקשר?");
+
+      recognition = new webkitSpeechRecognition();
+      recognition.lang = "he-IL";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let fullText = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          fullText += event.results[i][0].transcript;
         }
+        contactTranscript = fullText;
+        transcriptDiv.textContent = contactTranscript;
 
-        // פונקציה לחישוב המרחק של לווינשטיין (Levenshtein Distance)
-        function getLevenshteinDistance(a, b) {
-            const tmp = [];
-            for (let i = 0; i <= b.length; i++) tmp[i] = [i];
-            for (let i = 0; i <= a.length; i++) tmp[0][i] = i;
-            for (let i = 1; i <= b.length; i++) {
-                for (let j = 1; j <= a.length; j++) {
-                    tmp[i][j] = (b[i - 1] === a[j - 1]) ? tmp[i - 1][j - 1] : Math.min(tmp[i - 1][j - 1] + 1, Math.min(tmp[i][j - 1] + 1, tmp[i - 1][j] + 1));
-                }
-            }
-            return tmp[b.length][a.length];
+        const match = findMatchingContact(contactTranscript);
+        if (match) {
+          recognition.stop();
+          playSound(true);
+          questionDiv.textContent = `מתקשר ל: ${match}`;
         }
+      };
 
-        // מתחילים את הזיהוי כשהמשתמש אומר "טלפון"
-        function startListeningForPhone() {
-            if (!recognitionActive) {
-                startSpeechRecognition();
-            }
+      recognition.start();
+
+      setTimeout(() => {
+        if (recognition) recognition.stop();
+
+        if (!findMatchingContact(contactTranscript)) {
+          playSound(false);
+          questionDiv.textContent = "לא זוהה שם, נסה שוב.";
         }
+      }, 8000);
+    }
 
-        // אתחול הזיהוי בתחילת
-        startListeningForPhone();
-    </script>
+    function listenForPhoneKeyword() {
+      recognition = new webkitSpeechRecognition();
+      recognition.lang = "he-IL";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let resultText = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          resultText += event.results[i][0].transcript;
+        }
+        if (resultText.includes("טלפון")) {
+          recognition.stop();
+          startContactRecognition();
+        }
+      };
+
+      recognition.start();
+    }
+
+    // Start listening for the "טלפון" keyword
+    listenForPhoneKeyword();
+  </script>
 </body>
 </html>
