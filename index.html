@@ -28,21 +28,18 @@
     const transcriptDiv = document.getElementById('transcript');
     let recognition;
     let fullTranscript = '';
-    let askingForContact = false;
-    let waitingForResponse = false;
+    let alreadyCalled = false;
 
     const contacts = {
       "נעם שינובר": "tel:0501234567"
     };
 
-    // פונקציה לדבר
     function speak(text) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'he-IL';
       speechSynthesis.speak(utterance);
     }
 
-    // חישוב אחוז דמיון בין שני מחרוזות
     function similarity(str1, str2) {
       let matches = 0;
       const len = Math.max(str1.length, str2.length);
@@ -54,21 +51,22 @@
 
     function tryMatchName(text) {
       const words = text.trim().split(/\s+/);
-      if (words.length < 2) return false;
+      if (words.length < 2) return;
 
-      const candidate = words.slice(-2).join(' '); // שתי מילים אחרונות
-      for (const name in contacts) {
-        const score = similarity(candidate, name);
-        if (score >= 80) {
-          speak("מתקשר אל " + name);
-          setTimeout(() => window.location.href = contacts[name], 2000);
-          return true;
+      for (let i = 0; i < words.length - 1; i++) {
+        const pair = words[i] + " " + words[i + 1];
+        for (const name in contacts) {
+          const score = similarity(pair, name);
+          if (score >= 80 && !alreadyCalled) {
+            alreadyCalled = true;
+            const msg = `מתקשר ל${name}`;
+            speak(msg);
+            transcriptDiv.textContent += `\n\n${msg}`;
+            setTimeout(() => window.location.href = contacts[name], 3000);
+            return;
+          }
         }
       }
-
-      // אם יש 2 מילים אבל לא זוהה שם – נודיע
-      speak("השם " + candidate + " לא זוהה במערכת");
-      return false;
     }
 
     function startSpeechRecognition() {
@@ -88,27 +86,13 @@
           const chunk = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             fullTranscript += chunk + ' ';
+            tryMatchName(fullTranscript);
           } else {
             interimTranscript += chunk;
           }
         }
 
         transcriptDiv.textContent = fullTranscript + '\n' + interimTranscript;
-
-        // כשהמילה טלפון מופיעה במסך – מתחילים תהליך שאילת שם
-        if (!askingForContact && fullTranscript.includes("טלפון")) {
-          askingForContact = true;
-          speak("עם מי תרצה לדבר?");
-        }
-
-        // אם נשאל, מנסים לזהות שם
-        if (askingForContact && !waitingForResponse) {
-          waitingForResponse = true;
-          setTimeout(() => {
-            tryMatchName(fullTranscript);
-            waitingForResponse = false;
-          }, 8000); // נותן למשתמש 8 שניות לומר את השם
-        }
       };
 
       recognition.start();
