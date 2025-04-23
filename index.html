@@ -1,43 +1,39 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>זיהוי דיבור מתקדם</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>זיהוי דיבור אוטומטי</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      direction: rtl;
-      text-align: center;
-      margin-top: 50px;
-    }
-    #transcript {
-      font-size: 22px;
-      margin-top: 20px;
-      white-space: pre-wrap;
-    }
+    body { font-family: Arial, sans-serif; direction: rtl; text-align: center; margin-top: 50px; }
+    #transcript { font-size: 22px; margin-top: 20px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
-  <h1>זיהוי דיבור בלייב</h1>
-  <button id="startButton">התחל להקליט</button>
-  <div id="transcript"></div>
+  <h1>מערכת זיהוי קולית</h1>
+  <div id="transcript">מאזין לפקודת "טלפון"...</div>
 
   <script>
-    const startButton = document.getElementById('startButton');
-    const transcriptDiv = document.getElementById('transcript');
+    const transcriptDiv = document.getElementById("transcript");
     let recognition;
-    let fullTranscript = '';
-    let alreadyCalled = false;
-
-    const contacts = {
-      "נעם שינובר": "tel:0501234567"
-    };
+    let stage = "waiting"; // waiting, listen-name
+    const contacts = { "נעם שינובר": "tel:0501234567" };
+    let fullTranscript = "";
 
     function speak(text) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'he-IL';
       speechSynthesis.speak(utterance);
+    }
+
+    function playBeep() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(1000, ctx.currentTime);
+      oscillator.connect(ctx.destination);
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.3);
     }
 
     function similarity(str1, str2) {
@@ -49,27 +45,27 @@
       return (matches / len) * 100;
     }
 
-    function tryMatchName(text) {
+    function checkName(text) {
       const words = text.trim().split(/\s+/);
       if (words.length < 2) return;
-
       for (let i = 0; i < words.length - 1; i++) {
         const pair = words[i] + " " + words[i + 1];
         for (const name in contacts) {
           const score = similarity(pair, name);
-          if (score >= 80 && !alreadyCalled) {
-            alreadyCalled = true;
-            const msg = `מתקשר ל${name}`;
-            speak(msg);
-            transcriptDiv.textContent += `\n\n${msg}`;
+          if (score >= 80) {
+            speak(`מתקשר ל${name}`);
+            transcriptDiv.textContent += `\n\nמתקשר ל${name}`;
             setTimeout(() => window.location.href = contacts[name], 3000);
-            return;
+            return true;
           }
         }
       }
+      speak("לא זוהה, נסה שוב");
+      transcriptDiv.textContent += "\n\nלא זוהה, נסה שוב";
+      return false;
     }
 
-    function startSpeechRecognition() {
+    function startRecognition(onResult) {
       if (!('webkitSpeechRecognition' in window)) {
         alert("הדפדפן שלך לא תומך בזיהוי דיבור");
         return;
@@ -80,35 +76,36 @@
       recognition.continuous = true;
       recognition.interimResults = true;
 
-      recognition.onresult = function(event) {
-        let interimTranscript = '';
+      recognition.onresult = function (event) {
+        let transcript = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const chunk = event.results[i][0].transcript;
+          transcript += chunk;
           if (event.results[i].isFinal) {
-            fullTranscript += chunk + ' ';
-            tryMatchName(fullTranscript);
-          } else {
-            interimTranscript += chunk;
+            onResult(transcript);
           }
         }
-
-        transcriptDiv.textContent = fullTranscript + '\n' + interimTranscript;
       };
 
       recognition.start();
     }
 
-    startButton.addEventListener('click', () => {
-      if (navigator.permissions) {
-        navigator.permissions.query({ name: 'microphone' }).then(result => {
-          if (result.state === 'granted') {
-            startSpeechRecognition();
-          } else {
-            alert('עליך לאשר גישה למיקרופון');
-          }
-        });
-      } else {
-        startSpeechRecognition();
+    // שלב ראשון: מאזין ל"טלפון"
+    startRecognition(function (text) {
+      fullTranscript += text + " ";
+      transcriptDiv.textContent = "הטקסט עד כה:\n" + fullTranscript;
+      if (text.includes("טלפון") && stage === "waiting") {
+        stage = "listen-name";
+        recognition.stop();
+        playBeep();
+        speak("אמור את שם איש הקשר");
+        setTimeout(() => {
+          // שלב שני: מזהה שם
+          startRecognition(function (nameText) {
+            recognition.stop();
+            checkName(nameText);
+          });
+        }, 1000);
       }
     });
   </script>
