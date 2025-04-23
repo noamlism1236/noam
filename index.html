@@ -16,10 +16,16 @@
       font-size: 24px;
       color: #333;
     }
+    #transcript {
+      font-size: 20px;
+      color: #666;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
   <div id="status">מאזין...</div>
+  <div id="transcript"></div>
 
 <script>
   const contacts = {
@@ -30,14 +36,14 @@
   };
 
   const statusEl = document.getElementById("status");
+  const transcriptEl = document.getElementById("transcript");
   const synth = window.speechSynthesis;
   const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = 'he-IL';
-  recognition.continuous = false; // False: להפסיק אחרי כל זיהוי
-  recognition.interimResults = false;
+  recognition.continuous = true; // שומר על ההאזנה ברקע
+  recognition.interimResults = true;
   recognition.maxAlternatives = 1;
 
-  let isListening = false;
   let stage = "waiting_for_phone";  // תחילת שלב החיפוש אחר "טלפון"
 
   // פונקציה להשמעת טקסט
@@ -63,15 +69,19 @@
   }
 
   recognition.onend = () => {
-    isListening = false;
     if (stage === "waiting_for_phone") {
       startListeningForPhone();
+    } else if (stage === "waiting_for_name") {
+      startListeningForName();
     }
   };
 
   recognition.onresult = (event) => {
     const transcript = event.results[event.results.length - 1][0].transcript.trim();
     console.log("Recognized:", transcript);
+
+    // הצגת כל מה שנאמר בלייב
+    transcriptEl.textContent = "אתה אמרת: " + transcript;
 
     if (stage === "waiting_for_phone") {
       if (transcript.includes("טלפון")) {
