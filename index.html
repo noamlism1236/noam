@@ -48,7 +48,7 @@
       recognition = new SpeechRecognition();
       recognition.lang = 'he-IL';
       recognition.interimResults = true;
-      recognition.continuous = false;
+      recognition.continuous = true;  // Allow continuous listening
     }
 
     function listenForWakeWord() {
@@ -60,6 +60,7 @@
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim();
+        console.log("זיהוי:", transcript);
         if (transcript.includes("טלפון")) {
           wakeSound.play();
           listenForContact();
