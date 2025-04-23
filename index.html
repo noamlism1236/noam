@@ -1,117 +1,140 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <title>מערכת קולית להתקשרות</title>
+  <meta charset="UTF-8" />
+  <title>זיהוי קולי - טלפון</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 100px;
+      padding: 50px;
       direction: rtl;
     }
     #status {
-      font-size: 1.5em;
-      margin: 20px;
+      font-size: 24px;
+      margin-top: 20px;
     }
-    button {
+    #refresh {
+      margin-top: 20px;
+      display: none;
       padding: 10px 20px;
-      font-size: 1em;
+      font-size: 18px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <h1>🎙️ מערכת זיהוי קולי</h1>
+  <div id="status">האזנה למילת הפעלה...</div>
+  <button id="refresh" onclick="location.reload()">🔁 לחץ כדי לרענן</button>
 
-<div id="status">מאזין למילת ההפעלה...</div>
-<audio id="success-sound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
-<audio id="fail-sound" src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg"></audio>
+  <audio id="successSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <audio id="failSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+  <audio id="wakeSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
 
-<script>
-  const triggerWord = "טלפון";
-  const contacts = ["יוסי כהן", "דני לוי", "מירי ברק", "רון אוחנה"];
-  const statusEl = document.getElementById('status');
-  const successSound = document.getElementById('success-sound');
-  const failSound = document.getElementById('fail-sound');
+  <script>
+    const contactNames = ["יוסי כהן", "דני לוי", "מירי ברק", "רון אוחנה", "אורית מזרחי"];
+    const status = document.getElementById("status");
+    const refreshBtn = document.getElementById("refresh");
+    const successSound = document.getElementById("successSound");
+    const failSound = document.getElementById("failSound");
+    const wakeSound = document.getElementById("wakeSound");
 
-  let recognition;
-  let listeningForName = false;
+    let recognizing = false;
+    let recognition;
 
-  function initRecognition() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'he-IL';
-    recognition.interimResults = true;
-    recognition.continuous = false;
-  }
+    function initRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'he-IL';
+      recognition.interimResults = false;
+      recognition.continuous = false;
+    }
 
-  function listenForTrigger() {
-    initRecognition();
-    statusEl.textContent = "מאזין למילת ההפעלה...";
-    recognition.start();
+    function listenForWakeWord() {
+      if (recognizing) return;
+      initRecognition();
+      recognizing = true;
+      status.textContent = "האזנה למילת הפעלה...";
+      recognition.start();
 
-    recognition.onresult = (event) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      if (transcript.includes(triggerWord)) {
-        recognition.stop();
-        statusEl.textContent = "אמור את שם איש הקשר...";
-        listenForContact();
-      }
-    };
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.trim();
+        if (transcript.includes("טלפון")) {
+          wakeSound.play();
+          listenForContact();
+        } else {
+          recognizing = false;
+          listenForWakeWord(); // Keep listening
+        }
+      };
 
-    recognition.onerror = () => {
-      statusEl.textContent = "שגיאה. מנסה שוב...";
-      setTimeout(() => listenForTrigger(), 1000);
-    };
-  }
+      recognition.onerror = () => {
+        recognizing = false;
+        listenForWakeWord();
+      };
 
-  function listenForContact() {
-    initRecognition();
-    let detected = false;
-    let contactText = "";
+      recognition.onend = () => {
+        recognizing = false;
+        if (!recognition._listeningForContact) listenForWakeWord();
+      };
+    }
 
-    recognition.start();
-    const timeout = setTimeout(() => {
-      recognition.stop();
-    }, 8000); // 8 שניות
+    function listenForContact() {
+      recognition._listeningForContact = true;
+      initRecognition();
+      recognition.lang = 'he-IL';
+      recognition.interimResults = true;
 
-    recognition.onresult = (event) => {
-      let fullTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        fullTranscript += event.results[i][0].transcript + ' ';
-      }
-      contactText = fullTranscript.trim();
-      statusEl.textContent = `הוזן: ${contactText}`;
-    };
-
-    recognition.onend = () => {
-      clearTimeout(timeout);
-      const match = contacts.find(name => contactText.includes(name));
-      if (match) {
-        successSound.play();
-        statusEl.textContent = `מתקשר אל ${match}...`;
-        setTimeout(() => {
-          window.location.href = `tel:${match.replace(/\s/g, '')}`;
-        }, 1000);
-      } else {
+      const contactTimeout = setTimeout(() => {
+        status.textContent = "לא זוהה, לחץ לרענון";
         failSound.play();
-        statusEl.innerHTML = `לא זוהה, נסה שוב<br><br><button onclick="location.reload()">לחץ כדי לרענן</button>`;
-      }
+        refreshBtn.style.display = "inline-block";
+        recognition.stop();
+      }, 8000);
+
+      status.textContent = "🗣️ אמור את שם איש הקשר";
+      recognition.start();
+
+      let finalTranscript = "";
+
+      recognition.onresult = (event) => {
+        let currentTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        finalTranscript = currentTranscript.trim();
+        status.textContent = "👂 " + finalTranscript;
+
+        for (let name of contactNames) {
+          if (finalTranscript.includes(name)) {
+            clearTimeout(contactTimeout);
+            successSound.play();
+            status.textContent = "📞 מתקשר אל " + name;
+            setTimeout(() => {
+              window.location.href = `tel:${Math.floor(Math.random() * 900000000) + 100000000}`;
+            }, 1500);
+            recognition.stop();
+            return;
+          }
+        }
+      };
+
+      recognition.onerror = () => {
+        clearTimeout(contactTimeout);
+        failSound.play();
+        status.textContent = "❌ שגיאה בזיהוי";
+        refreshBtn.style.display = "inline-block";
+      };
+
+      recognition.onend = () => {
+        recognition._listeningForContact = false;
+      };
+    }
+
+    window.onload = () => {
+      listenForWakeWord();
     };
-
-    recognition.onerror = () => {
-      failSound.play();
-      statusEl.innerHTML = `שגיאה בזיהוי<br><br><button onclick="location.reload()">לחץ כדי לרענן</button>`;
-    };
-  }
-
-  // Start listening as soon as page loads
-  window.onload = () => {
-    listenForTrigger();
-  };
-</script>
-
+  </script>
 </body>
 </html>
