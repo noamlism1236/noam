@@ -16,9 +16,9 @@
   <script>
     const transcriptDiv = document.getElementById("transcript");
     let recognition;
-    let stage = "waiting"; // waiting, listen-name
     const contacts = { "נעם שינובר": "tel:0501234567" };
     let fullTranscript = "";
+    let stage = "waiting";
 
     function speak(text) {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -45,27 +45,7 @@
       return (matches / len) * 100;
     }
 
-    function checkName(text) {
-      const words = text.trim().split(/\s+/);
-      if (words.length < 2) return;
-      for (let i = 0; i < words.length - 1; i++) {
-        const pair = words[i] + " " + words[i + 1];
-        for (const name in contacts) {
-          const score = similarity(pair, name);
-          if (score >= 80) {
-            speak(`מתקשר ל${name}`);
-            transcriptDiv.textContent += `\n\nמתקשר ל${name}`;
-            setTimeout(() => window.location.href = contacts[name], 3000);
-            return true;
-          }
-        }
-      }
-      speak("לא זוהה, נסה שוב");
-      transcriptDiv.textContent += "\n\nלא זוהה, נסה שוב";
-      return false;
-    }
-
-    function startRecognition(onResult) {
+    function startRecognition(onResult, timeoutMs = null, onTimeout = null) {
       if (!('webkitSpeechRecognition' in window)) {
         alert("הדפדפן שלך לא תומך בזיהוי דיבור");
         return;
@@ -76,36 +56,70 @@
       recognition.continuous = true;
       recognition.interimResults = true;
 
+      let timeoutId = null;
+
       recognition.onresult = function (event) {
-        let transcript = "";
+        let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const chunk = event.results[i][0].transcript;
-          transcript += chunk;
-          if (event.results[i].isFinal) {
-            onResult(transcript);
-          }
+          transcript += event.results[i][0].transcript;
+        }
+        transcriptDiv.textContent = "הטקסט:\n" + transcript;
+        if (event.results[event.results.length - 1].isFinal) {
+          recognition.stop();
+          clearTimeout(timeoutId);
+          onResult(transcript);
         }
       };
 
       recognition.start();
+
+      if (timeoutMs !== null) {
+        timeoutId = setTimeout(() => {
+          recognition.stop();
+          if (onTimeout) onTimeout();
+        }, timeoutMs);
+      }
     }
 
-    // שלב ראשון: מאזין ל"טלפון"
+    function askForName() {
+      playBeep();
+      speak("למי תרצה להתקשר?");
+      setTimeout(() => {
+        startRecognition(
+          function (text) {
+            const words = text.trim().split(/\s+/);
+            for (let i = 0; i < words.length - 1; i++) {
+              const pair = words[i] + " " + words[i + 1];
+              for (const name in contacts) {
+                if (similarity(pair, name) >= 80) {
+                  speak(`מתקשר ל${name}`);
+                  transcriptDiv.textContent += `\n\nמתקשר ל${name}`;
+                  setTimeout(() => window.location.href = contacts[name], 3000);
+                  return;
+                }
+              }
+            }
+            // אם לא נמצאה התאמה
+            speak("לא זוהה, נסה שוב");
+            askForName();
+          },
+          8000, // 8 שניות האזנה
+          function () {
+            speak("לא זוהה, נסה שוב");
+            askForName();
+          }
+        );
+      }, 800);
+    }
+
+    // התחלת האזנה תמידית למילה "טלפון"
     startRecognition(function (text) {
       fullTranscript += text + " ";
       transcriptDiv.textContent = "הטקסט עד כה:\n" + fullTranscript;
       if (text.includes("טלפון") && stage === "waiting") {
-        stage = "listen-name";
+        stage = "asking";
         recognition.stop();
-        playBeep();
-        speak("אמור את שם איש הקשר");
-        setTimeout(() => {
-          // שלב שני: מזהה שם
-          startRecognition(function (nameText) {
-            recognition.stop();
-            checkName(nameText);
-          });
-        }, 1000);
+        askForName();
       }
     });
   </script>
