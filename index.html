@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>זיהוי דיבור בלייב</title>
+  <title>זיהוי דיבור מתקדם</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      direction: rtl;
       text-align: center;
       margin-top: 50px;
-      direction: rtl;
     }
     #transcript {
-      font-size: 24px;
+      font-size: 22px;
       margin-top: 20px;
       white-space: pre-wrap;
     }
@@ -30,16 +30,45 @@
     let fullTranscript = '';
     let askingForContact = false;
     let waitingForResponse = false;
+
     const contacts = {
-      "אמא": "tel:0501234567",
-      "אבא": "tel:0507654321",
-      "דני": "tel:0500000000"
+      "נעם שינובר": "tel:0501234567"
     };
 
+    // פונקציה לדבר
     function speak(text) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'he-IL';
       speechSynthesis.speak(utterance);
+    }
+
+    // חישוב אחוז דמיון בין שני מחרוזות
+    function similarity(str1, str2) {
+      let matches = 0;
+      const len = Math.max(str1.length, str2.length);
+      for (let i = 0; i < Math.min(str1.length, str2.length); i++) {
+        if (str1[i] === str2[i]) matches++;
+      }
+      return (matches / len) * 100;
+    }
+
+    function tryMatchName(text) {
+      const words = text.trim().split(/\s+/);
+      if (words.length < 2) return false;
+
+      const candidate = words.slice(-2).join(' '); // שתי מילים אחרונות
+      for (const name in contacts) {
+        const score = similarity(candidate, name);
+        if (score >= 80) {
+          speak("מתקשר אל " + name);
+          setTimeout(() => window.location.href = contacts[name], 2000);
+          return true;
+        }
+      }
+
+      // אם יש 2 מילים אבל לא זוהה שם – נודיע
+      speak("השם " + candidate + " לא זוהה במערכת");
+      return false;
     }
 
     function startSpeechRecognition() {
@@ -56,46 +85,33 @@
       recognition.onresult = function(event) {
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcriptChunk = event.results[i][0].transcript;
+          const chunk = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            fullTranscript += transcriptChunk + ' ';
+            fullTranscript += chunk + ' ';
           } else {
-            interimTranscript += transcriptChunk;
+            interimTranscript += chunk;
           }
         }
 
         transcriptDiv.textContent = fullTranscript + '\n' + interimTranscript;
 
+        // כשהמילה טלפון מופיעה במסך – מתחילים תהליך שאילת שם
         if (!askingForContact && fullTranscript.includes("טלפון")) {
           askingForContact = true;
           speak("עם מי תרצה לדבר?");
         }
 
+        // אם נשאל, מנסים לזהות שם
         if (askingForContact && !waitingForResponse) {
-          checkForContactName(fullTranscript);
+          waitingForResponse = true;
+          setTimeout(() => {
+            tryMatchName(fullTranscript);
+            waitingForResponse = false;
+          }, 8000); // נותן למשתמש 8 שניות לומר את השם
         }
       };
 
       recognition.start();
-    }
-
-    function checkForContactName(text) {
-      for (const name in contacts) {
-        if (text.includes(name)) {
-          speak("מתקשר אל " + name);
-          setTimeout(() => {
-            window.location.href = contacts[name];
-          }, 2000);
-          return;
-        }
-      }
-
-      // אם לא זוהה שם איש קשר
-      waitingForResponse = true;
-      speak("לא זוהה, אמור את שם איש הקשר");
-      setTimeout(() => {
-        waitingForResponse = false;
-      }, 8000); // 8 שניות האזנה מחדש
     }
 
     startButton.addEventListener('click', () => {
