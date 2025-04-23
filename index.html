@@ -38,9 +38,7 @@
   recognition.maxAlternatives = 1;
 
   let isListening = false;
-  let listenTimeout = null;
   let stage = "waiting_for_phone";  // תחילת שלב החיפוש אחר "טלפון"
-  let nameTimeout = null;
 
   // פונקציה להשמעת טקסט
   function speak(text) {
@@ -50,45 +48,24 @@
     statusEl.textContent = text;
   }
 
+  // מתחיל להאזין למילת "טלפון"
+  function startListeningForPhone() {
+    statusEl.textContent = "נא לומר את המילה 'טלפון'...";
+    speak("נא לומר את המילה 'טלפון'");
+    recognition.start();
+  }
+
   // מתחיל להאזין לשם איש קשר
-  function startListeningForName(duration = 30000) {
+  function startListeningForName() {
     statusEl.textContent = "נא לומר את שם איש הקשר...";
     speak("נא לומר את שם איש הקשר");
     recognition.start();
-    
-    // עצור את ההאזנה אחרי הזמן המוגדר
-    clearTimeout(nameTimeout);
-    nameTimeout = setTimeout(() => {
-      if (stage === "waiting_for_name") {
-        stage = "waiting_for_phone";
-        stopListening();
-        playErrorSound();
-        speak("לא זוהה, נסה שם אחר");
-        setTimeout(() => listen(), 2500);
-      }
-    }, duration);
-  }
-
-  // מתחיל את ההאזנה
-  function listen() {
-    if (!isListening) {
-      isListening = true;
-      recognition.start();
-    }
-  }
-
-  // מפסיק את ההאזנה
-  function stopListening() {
-    if (isListening) {
-      recognition.stop();
-      isListening = false;
-    }
   }
 
   recognition.onend = () => {
     isListening = false;
     if (stage === "waiting_for_phone") {
-      setTimeout(() => listen(), 1000);
+      startListeningForPhone();
     }
   };
 
@@ -99,22 +76,22 @@
     if (stage === "waiting_for_phone") {
       if (transcript.includes("טלפון")) {
         speak("למי להתקשר?");
+        statusEl.textContent = "למי להתקשר?";
         stage = "waiting_for_name";
         startListeningForName();
-        playSuccessSound(); // השמעת צליל בהצלחה
       }
     } else if (stage === "waiting_for_name") {
       const match = findBestMatch(transcript);
       if (match) {
-        clearTimeout(nameTimeout);
-        stage = "waiting_for_phone";
-        stopListening();
-        playSuccessSound();
         speak("מתקשר אל " + match);
         statusEl.textContent = "מתקשר אל " + match;
         setTimeout(() => {
           window.location.href = contacts[match];
         }, 2000);
+      } else {
+        speak("לא זוהה, נסה שם אחר");
+        statusEl.textContent = "לא זוהה, נסה שם אחר";
+        startListeningForName();
       }
     }
   };
@@ -126,15 +103,10 @@
     const matchedNames = [];
 
     // נסה להתאים שמות מתוך אנשי הקשר
-    for (let i = 0; i < words.length; i++) {
-      for (let size = 1; size <= 3 && i + size <= words.length; size++) {
-        const slice = words.slice(i, i + size).join(" ");
-        for (const name in contacts) {
-          const score = similarity(slice, name);
-          if (score > 0.85) {
-            matchedNames.push({ name, score });
-          }
-        }
+    for (let name in contacts) {
+      const score = similarity(transcript, name);
+      if (score > 0.85) {
+        matchedNames.push({ name, score });
       }
     }
 
@@ -178,29 +150,9 @@
     return costs[s2.length];
   }
 
-  // פונקציה להשמעת צליל בהצלחה
-  function playSuccessSound() {
-    const audio = new Audio('https://www.soundjay.com/button/beep-07.wav');
-    audio.play();
-  }
-
-  // פונקציה להשמעת צליל שגיאה
-  function playErrorSound() {
-    const audio = new Audio('https://www.soundjay.com/button/beep-09.wav');
-    audio.play();
-  }
-
-  // טיפול בשגיאות בזיהוי דיבור
-  recognition.onerror = (event) => {
-    console.error("Speech recognition error", event);
-    statusEl.textContent = "שגיאה בזיהוי. מנסה שוב...";
-    setTimeout(() => listen(), 1500);
-  };
-
   // אתחול המערכת כאשר הדף נטען
   window.onload = () => {
-    speak("אני מאזין");
-    listen();
+    startListeningForPhone();
   };
 </script>
 </body>
