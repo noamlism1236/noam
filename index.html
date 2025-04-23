@@ -43,6 +43,7 @@
     let recognizing = false;
     let recognition;
 
+    // Initialize SpeechRecognition and set language to Hebrew
     function initRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
@@ -51,6 +52,7 @@
       recognition.continuous = true;  // Allow continuous listening
     }
 
+    // Function to start listening for the wake word "טלפון"
     function listenForWakeWord() {
       if (recognizing) return;
       initRecognition();
@@ -81,6 +83,7 @@
       };
     }
 
+    // Function to listen for the contact name after "טלפון" is detected
     function listenForContact() {
       recognition._listeningForContact = true;
       initRecognition();
@@ -133,6 +136,7 @@
       };
     }
 
+    // Start listening when the page loads
     window.onload = () => {
       listenForWakeWord();
     };
