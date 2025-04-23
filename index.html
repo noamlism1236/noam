@@ -65,18 +65,18 @@
           listenForContact();
         } else {
           recognizing = false;
-          listenForWakeWord(); // Keep listening
+          listenForWakeWord(); // Keep listening for the wake word
         }
       };
 
       recognition.onerror = () => {
         recognizing = false;
-        listenForWakeWord();
+        listenForWakeWord();  // Restart listening after an error
       };
 
       recognition.onend = () => {
         recognizing = false;
-        if (!recognition._listeningForContact) listenForWakeWord();
+        listenForWakeWord();  // Keep listening after recognition ends
       };
     }
 
