@@ -18,52 +18,21 @@
 </head>
 <body>
     <h1>זיהוי דיבור בלייב</h1>
-    <div id="transcript">הטקסט עד כה:</div>
-
+    <div id="transcript"></div>
     <script>
         const transcriptDiv = document.getElementById('transcript');
-        const contacts = ['נעם שינובר'];
         let recognition;
-        let listeningForContact = false;
-        let lastTranscript = '';
+        let recognitionActive = false;
 
-        function playBeep(success = true) {
-            const ctx = new AudioContext();
-            const oscillator = ctx.createOscillator();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(success ? 800 : 300, ctx.currentTime);
-            oscillator.connect(ctx.destination);
-            oscillator.start();
-            oscillator.stop(ctx.currentTime + 0.3);
+        const contacts = ['נעם שינובר', 'יונתן רזאל', 'אייל גולן'];  // אנשי קשר במערכת
+
+        // פונקציה להשמעת צליל (עבור אישור וכישלון)
+        function playSound(success) {
+            const audio = new Audio(success ? 'https://www.soundjay.com/button/beep-07.wav' : 'https://www.soundjay.com/button/beep-08b.wav');
+            audio.play();
         }
 
-        function similarity(s1, s2) {
-            const longer = s1.length > s2.length ? s1 : s2;
-            const shorter = s1.length > s2.length ? s2 : s1;
-            const longerLength = longer.length;
-            if (longerLength === 0) return 1.0;
-            return (longerLength - levenshteinDistance(longer, shorter)) / parseFloat(longerLength);
-        }
-
-        function levenshteinDistance(a, b) {
-            const matrix = Array.from({ length: b.length + 1 }, () => []);
-            for (let i = 0; i <= b.length; i++) matrix[i][0] = i;
-            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-
-            for (let i = 1; i <= b.length; i++) {
-                for (let j = 1; j <= a.length; j++) {
-                    matrix[i][j] = b.charAt(i - 1) === a.charAt(j - 1)
-                        ? matrix[i - 1][j - 1]
-                        : Math.min(
-                            matrix[i - 1][j - 1] + 1,
-                            matrix[i][j - 1] + 1,
-                            matrix[i - 1][j] + 1
-                        );
-                }
-            }
-            return matrix[b.length][a.length];
-        }
-
+        // הפעלת זיהוי דיבור
         function startSpeechRecognition() {
             if (!('webkitSpeechRecognition' in window)) {
                 alert("הדפדפן שלך לא תומך בזיהוי דיבור");
@@ -71,67 +40,69 @@
             }
 
             recognition = new webkitSpeechRecognition();
-            recognition.lang = 'he-IL';
-            recognition.continuous = true;
-            recognition.interimResults = true;
+            recognition.lang = 'he-IL'; // הגדרת השפה לעברית
+            recognition.continuous = false; // לא לאפשר זיהוי רצוף
+            recognition.interimResults = true; // להציג תוצאות בזמן אמת
+            recognition.maxAlternatives = 1; // מקסימום אפשרויות תוצאה
 
             recognition.onresult = function(event) {
-                let fullTranscript = lastTranscript;
+                let transcript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const resultText = event.results[i][0].transcript.trim();
-                    fullTranscript += ' ' + resultText;
-
-                    if (!listeningForContact && fullTranscript.includes('טלפון')) {
-                        playBeep();
-                        listeningForContact = true;
-                        transcriptDiv.textContent = 'הטקסט עד כה:\nטלפון';
-                        setTimeout(() => {
-                            transcriptDiv.textContent += '\nלמי תרצה להתקשר?';
-                            listenForName();
-                        }, 500);
-                        break;
-                    }
+                    transcript += event.results[i][0].transcript;
                 }
-                lastTranscript = fullTranscript;
+                transcriptDiv.textContent = 'הטקסט עד כה: ' + transcript;
+
+                // אם המילה "טלפון" מופיעה בטקסט, נשמיע צליל ונבקש שם איש קשר
+                if (transcript.includes("טלפון")) {
+                    playSound(true);  // צליל אישור
+                    transcriptDiv.textContent += "\n\nלמי תרצה להתקשר?";
+                    startListeningForContactName();
+                }
             };
 
             recognition.start();
         }
 
-        function listenForName() {
-            let collected = '';
-            const nameRecognition = new webkitSpeechRecognition();
-            nameRecognition.lang = 'he-IL';
-            nameRecognition.continuous = false;
-            nameRecognition.interimResults = false;
-
-            nameRecognition.onresult = function(event) {
-                collected = event.results[0][0].transcript.trim();
-                let matchFound = false;
-
-                for (let contact of contacts) {
-                    if (similarity(collected, contact) >= 0.8) {
-                        playBeep(true);
-                        transcriptDiv.textContent = `מתקשר ל... ${contact}`;
-                        matchFound = true;
-                        break;
-                    }
-                }
-                if (!matchFound) {
-                    playBeep(false);
-                    transcriptDiv.textContent = `לא זוהה, נסה שוב.`;
-                    setTimeout(() => listenForName(), 8000);
-                }
-            };
-
+        // התחלת האזנה לשם איש קשר
+        function startListeningForContactName() {
+            recognitionActive = true;
             setTimeout(() => {
-                nameRecognition.stop();
-            }, 8000);
-
-            nameRecognition.start();
+                recognition.stop();
+                const userName = transcriptDiv.textContent.split('הטקסט עד כה: ').pop();
+                const matchedContact = contacts.find(contact => getLevenshteinDistance(contact, userName) < contact.length * 0.2);
+                if (matchedContact) {
+                    playSound(true);  // צליל הצלחה
+                    transcriptDiv.textContent = `מתקשר ל: ${matchedContact}`;
+                } else {
+                    playSound(false);  // צליל כישלון
+                    transcriptDiv.textContent = 'נסה שוב';
+                    startListeningForContactName();
+                }
+            }, 8000);  // 8 שניות האזנה
         }
 
-        startSpeechRecognition();
+        // פונקציה לחישוב המרחק של לווינשטיין (Levenshtein Distance)
+        function getLevenshteinDistance(a, b) {
+            const tmp = [];
+            for (let i = 0; i <= b.length; i++) tmp[i] = [i];
+            for (let i = 0; i <= a.length; i++) tmp[0][i] = i;
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    tmp[i][j] = (b[i - 1] === a[j - 1]) ? tmp[i - 1][j - 1] : Math.min(tmp[i - 1][j - 1] + 1, Math.min(tmp[i][j - 1] + 1, tmp[i - 1][j] + 1));
+                }
+            }
+            return tmp[b.length][a.length];
+        }
+
+        // מתחילים את הזיהוי כשהמשתמש אומר "טלפון"
+        function startListeningForPhone() {
+            if (!recognitionActive) {
+                startSpeechRecognition();
+            }
+        }
+
+        // אתחול הזיהוי בתחילת
+        startListeningForPhone();
     </script>
 </body>
 </html>
