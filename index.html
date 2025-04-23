@@ -1,222 +1,117 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Content Scanner</title>
+  <title>מערכת קולית להתקשרות</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f4f9;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 1200px;
-    }
-    h1 {
+      font-family: Arial, sans-serif;
       text-align: center;
-      color: #333;
+      margin-top: 100px;
+      direction: rtl;
     }
-    #video {
-      max-width: 100%;
-      margin-top: 20px;
-      display: block;
-      border: 2px solid #ccc;
-      border-radius: 5px;
+    #status {
+      font-size: 1.5em;
+      margin: 20px;
     }
-    table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-    }
-    table th, table td {
-      padding: 12px;
-      border: 1px solid #ddd;
-      text-align: center;
-    }
-    table th {
-      background-color: #4CAF50;
-      color: white;
-    }
-    .status {
-      color: #333;
-      margin-top: 20px;
-      text-align: center;
-    }
-    .hidden {
-      display: none;
-    }
-    .button {
-      background-color: #4CAF50;
-      color: white;
+    button {
       padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 20px;
-      display: block;
-      width: 100%;
-      font-size: 18px;
-    }
-    .button:hover {
-      background-color: #45a049;
+      font-size: 1em;
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>Video Content Scanner</h1>
-    <input type="file" id="fileInput" accept="video/*" />
-    <div class="status" id="status">Please upload a video to start the scan.</div>
-    <video id="video" controls class="hidden"></video>
-    <table id="scanResults" class="hidden">
-      <thead>
-        <tr>
-          <th>Time (Seconds)</th>
-          <th>Type</th>
-          <th>Level of Issue</th>
-        </tr>
-      </thead>
-      <tbody id="resultsBody">
-        <!-- Results will be filled here -->
-      </tbody>
-    </table>
-    <button id="startBtn" class="button hidden">Play Scanned Video</button>
-  </div>
+<div id="status">מאזין למילת ההפעלה...</div>
+<audio id="success-sound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="fail-sound" src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg"></audio>
 
-  <script>
-    const video = document.getElementById("video");
-    const fileInput = document.getElementById("fileInput");
-    const status = document.getElementById("status");
-    const scanResults = document.getElementById("scanResults");
-    const resultsBody = document.getElementById("resultsBody");
-    const startBtn = document.getElementById("startBtn");
+<script>
+  const triggerWord = "טלפון";
+  const contacts = ["יוסי כהן", "דני לוי", "מירי ברק", "רון אוחנה"];
+  const statusEl = document.getElementById('status');
+  const successSound = document.getElementById('success-sound');
+  const failSound = document.getElementById('fail-sound');
 
-    let blockedTimes = [];
+  let recognition;
+  let listeningForName = false;
 
-    fileInput.addEventListener("change", () => {
-      const file = fileInput.files[0];
-      if (!file) return;
+  function initRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'he-IL';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+  }
 
-      const url = URL.createObjectURL(file);
-      video.src = url;
-      video.load();
-      video.style.display = "none"; // Hide video while scanning
-      status.textContent = "Scanning the video...";
-      scanResults.classList.add("hidden");
-      resultsBody.innerHTML = "";
+  function listenForTrigger() {
+    initRecognition();
+    statusEl.textContent = "מאזין למילת ההפעלה...";
+    recognition.start();
 
-      blockedTimes = [];
-
-      video.addEventListener("loadedmetadata", () => {
-        scanVideo();
-      }, { once: true });
-    });
-
-    async function scanVideo() {
-      let duration = video.duration;
-      let times = [];
-      for (let t = 0; t < duration; t += 2) times.push(t);  // Scan every 2 seconds
-
-      let remaining = times.length;
-      status.textContent = `Estimated time left: ${remaining} seconds`;
-
-      for (const time of times) {
-        await new Promise(resolve => {
-          video.currentTime = time;
-          const handler = async () => {
-            video.removeEventListener("seeked", handler);
-
-            const frameBlob = await captureFrame();
-            if (!frameBlob) {
-              resolve(); return;
-            }
-
-            const form = new FormData();
-            form.append("media", frameBlob, "frame.jpg");
-            form.append("models", "nudity,violence,wad");
-            form.append("api_user", "544968815");
-            form.append("api_secret", "gyp4DCW8PkfVVXokqvQTvCxDdPyCK29P");
-
-            try {
-              const res = await fetch("https://api.sightengine.com/1.0/check.json", {
-                method: "POST",
-                body: form
-              });
-              const json = await res.json();
-
-              const badContent = [];
-              if (json.nudity?.raw > 0.5) badContent.push("Nudity");
-              if (json.violence > 0.5) badContent.push("Violence");
-              if (json.weapon > 0.4) badContent.push("Weapon");
-              if (json.blood > 0.5) badContent.push("Blood");
-              if (json.drug > 0.5) badContent.push("Drugs");
-
-              if (badContent.length > 0) {
-                blockedTimes.push({
-                  time,
-                  type: badContent.join(", "),
-                  level: "High"
-                });
-
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                  <td>${time}</td>
-                  <td>${badContent.join(", ")}</td>
-                  <td>High</td>
-                `;
-                resultsBody.appendChild(row);
-              }
-            } catch (e) {
-              console.error("API error", e);
-            }
-
-            remaining--;
-            if (remaining > 0) {
-              status.textContent = `Estimated time left: ${remaining} seconds`;
-            } else {
-              status.textContent = blockedTimes.length > 0
-                ? "Problematic content detected."
-                : "No problematic content detected.";
-              scanResults.classList.remove("hidden");
-              video.style.display = "block";
-              startBtn.style.display = "inline-block";
-            }
-            resolve();
-          };
-          video.addEventListener("seeked", handler);
-        });
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
       }
-    }
+      if (transcript.includes(triggerWord)) {
+        recognition.stop();
+        statusEl.textContent = "אמור את שם איש הקשר...";
+        listenForContact();
+      }
+    };
 
-    function captureFrame() {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    recognition.onerror = () => {
+      statusEl.textContent = "שגיאה. מנסה שוב...";
+      setTimeout(() => listenForTrigger(), 1000);
+    };
+  }
 
-      return new Promise(resolve => {
-        canvas.toBlob(resolve, "image/jpeg");
-      });
-    }
+  function listenForContact() {
+    initRecognition();
+    let detected = false;
+    let contactText = "";
 
-    startBtn.addEventListener("click", () => {
-      video.controls = true;
-      video.style.display = "block";
-      video.play();
-    });
-  </script>
+    recognition.start();
+    const timeout = setTimeout(() => {
+      recognition.stop();
+    }, 8000); // 8 שניות
+
+    recognition.onresult = (event) => {
+      let fullTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        fullTranscript += event.results[i][0].transcript + ' ';
+      }
+      contactText = fullTranscript.trim();
+      statusEl.textContent = `הוזן: ${contactText}`;
+    };
+
+    recognition.onend = () => {
+      clearTimeout(timeout);
+      const match = contacts.find(name => contactText.includes(name));
+      if (match) {
+        successSound.play();
+        statusEl.textContent = `מתקשר אל ${match}...`;
+        setTimeout(() => {
+          window.location.href = `tel:${match.replace(/\s/g, '')}`;
+        }, 1000);
+      } else {
+        failSound.play();
+        statusEl.innerHTML = `לא זוהה, נסה שוב<br><br><button onclick="location.reload()">לחץ כדי לרענן</button>`;
+      }
+    };
+
+    recognition.onerror = () => {
+      failSound.play();
+      statusEl.innerHTML = `שגיאה בזיהוי<br><br><button onclick="location.reload()">לחץ כדי לרענן</button>`;
+    };
+  }
+
+  // Start listening as soon as page loads
+  window.onload = () => {
+    listenForTrigger();
+  };
+</script>
+
 </body>
 </html>
