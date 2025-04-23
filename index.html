@@ -1,73 +1,116 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>זיהוי דיבור בלייב</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        #transcript {
-            font-size: 24px;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>זיהוי דיבור בלייב</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+      direction: rtl;
+    }
+    #transcript {
+      font-size: 24px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
-    <h1>זיהוי דיבור בלייב</h1>
-    <button id="startButton">התחל להקליט</button>
-    <div id="transcript"></div>
+  <h1>זיהוי דיבור בלייב</h1>
+  <button id="startButton">התחל להקליט</button>
+  <div id="transcript"></div>
 
-    <script>
-        const startButton = document.getElementById('startButton');
-        const transcriptDiv = document.getElementById('transcript');
-        let recognition;
+  <script>
+    const startButton = document.getElementById('startButton');
+    const transcriptDiv = document.getElementById('transcript');
+    let recognition;
+    let fullTranscript = '';
+    let askingForContact = false;
+    let waitingForResponse = false;
+    const contacts = {
+      "אמא": "tel:0501234567",
+      "אבא": "tel:0507654321",
+      "דני": "tel:0500000000"
+    };
 
-        // פונקציה להפעיל את זיהוי הדיבור
-        function startSpeechRecognition() {
-            // בדיקה אם Web Speech API נתמך בדפדפן
-            if (!('webkitSpeechRecognition' in window)) {
-                alert("הדפדפן שלך לא תומך בזיהוי דיבור");
-                return;
-            }
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'he-IL';
+      speechSynthesis.speak(utterance);
+    }
 
-            // יצירת אובייקט זיהוי הדיבור
-            recognition = new webkitSpeechRecognition();
-            recognition.lang = 'he-IL'; // הגדרת השפה לעברית
-            recognition.continuous = true; // מאפשר זיהוי דיבור רצוף
-            recognition.interimResults = true; // מציג תוצאות בזמן אמת
+    function startSpeechRecognition() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert("הדפדפן שלך לא תומך בזיהוי דיבור");
+        return;
+      }
 
-            // הפונקציה שתופסת את התוצאות של זיהוי הדיבור
-            recognition.onresult = function(event) {
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
-                }
-                transcriptDiv.textContent = transcript;
-            };
+      recognition = new webkitSpeechRecognition();
+      recognition.lang = 'he-IL';
+      recognition.continuous = true;
+      recognition.interimResults = true;
 
-            // התחל את הזיהוי
-            recognition.start();
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptChunk = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            fullTranscript += transcriptChunk + ' ';
+          } else {
+            interimTranscript += transcriptChunk;
+          }
         }
 
-        // בקשת אישור להקלטה
-        startButton.addEventListener('click', function() {
-            if (navigator.permissions) {
-                navigator.permissions.query({ name: 'microphone' }).then(function(result) {
-                    if (result.state === 'granted') {
-                        startSpeechRecognition();
-                    } else {
-                        alert('עליך לאשר גישה למיקרופון');
-                    }
-                });
-            } else {
-                alert('הדפדפן שלך לא תומך בבקשות אישור גישה');
-                startSpeechRecognition();
-            }
+        transcriptDiv.textContent = fullTranscript + '\n' + interimTranscript;
+
+        if (!askingForContact && fullTranscript.includes("טלפון")) {
+          askingForContact = true;
+          speak("עם מי תרצה לדבר?");
+        }
+
+        if (askingForContact && !waitingForResponse) {
+          checkForContactName(fullTranscript);
+        }
+      };
+
+      recognition.start();
+    }
+
+    function checkForContactName(text) {
+      for (const name in contacts) {
+        if (text.includes(name)) {
+          speak("מתקשר אל " + name);
+          setTimeout(() => {
+            window.location.href = contacts[name];
+          }, 2000);
+          return;
+        }
+      }
+
+      // אם לא זוהה שם איש קשר
+      waitingForResponse = true;
+      speak("לא זוהה, אמור את שם איש הקשר");
+      setTimeout(() => {
+        waitingForResponse = false;
+      }, 8000); // 8 שניות האזנה מחדש
+    }
+
+    startButton.addEventListener('click', () => {
+      if (navigator.permissions) {
+        navigator.permissions.query({ name: 'microphone' }).then(result => {
+          if (result.state === 'granted') {
+            startSpeechRecognition();
+          } else {
+            alert('עליך לאשר גישה למיקרופון');
+          }
         });
-    </script>
+      } else {
+        startSpeechRecognition();
+      }
+    });
+  </script>
 </body>
 </html>
