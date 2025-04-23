@@ -74,12 +74,12 @@
 
       recognition.onerror = () => {
         recognizing = false;
-        listenForWakeWord();  // Restart listening after an error
+        listenForWakeWord(); // Restart listening after an error
       };
 
       recognition.onend = () => {
         recognizing = false;
-        listenForWakeWord();  // Keep listening after recognition ends
+        listenForWakeWord(); // Keep listening after recognition ends
       };
     }
 
