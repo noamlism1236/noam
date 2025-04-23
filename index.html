@@ -44,6 +44,7 @@
   recognition.interimResults = true;
   recognition.maxAlternatives = 1;
 
+  let phoneWordDisplayed = false;  // דגל המראה אם המילה "טלפון" הוצגה
   let stage = "waiting_for_phone";  // תחילת שלב החיפוש אחר "טלפון"
 
   // פונקציה להשמעת טקסט
@@ -83,14 +84,17 @@
     // הצגת כל מה שנאמר בלייב
     transcriptEl.textContent = "אתה אמרת: " + transcript;
 
-    if (stage === "waiting_for_phone") {
-      if (transcript.includes("טלפון")) {
-        speak("למי להתקשר?");
-        statusEl.textContent = "למי להתקשר?";
-        stage = "waiting_for_name";
-        startListeningForName();
-      }
-    } else if (stage === "waiting_for_name") {
+    // אם המילה "טלפון" הוצגה, נשאל את שם איש הקשר
+    if (!phoneWordDisplayed && transcript.includes("טלפון")) {
+      phoneWordDisplayed = true;
+      speak("למי להתקשר?");
+      statusEl.textContent = "למי להתקשר?";
+      stage = "waiting_for_name";
+      startListeningForName();
+    }
+
+    // אם אנחנו בשלב של המתנה לשם איש קשר
+    if (stage === "waiting_for_name") {
       const match = findBestMatch(transcript);
       if (match) {
         speak("מתקשר אל " + match);
