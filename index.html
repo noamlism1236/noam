@@ -10,6 +10,7 @@
       direction: rtl;
       text-align: center;
       margin: 50px;
+      overflow: hidden;
     }
     #question {
       font-size: 26px;
@@ -20,19 +21,45 @@
       font-size: 20px;
       color: #555;
     }
+    #microphone {
+      font-size: 50px;
+      color: #333;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.2);
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    .active {
+      color: green;
+    }
   </style>
 </head>
 <body>
   <div id="question"></div>
   <div id="transcript"></div>
+  <div id="microphone">&#127908;</div>
 
   <script>
     const questionDiv = document.getElementById("question");
     const transcriptDiv = document.getElementById("transcript");
+    const microphoneDiv = document.getElementById("microphone");
 
     let recognition;
-    let isListeningForPhone = true;
     let contactTranscript = '';
+    let attemptCount = 0;
+    const maxAttempts = 3;
 
     const contacts = ["נעם שינובר", "יונתן רזאל", "אייל גולן"];
 
@@ -83,6 +110,11 @@
     }
 
     function startContactRecognition() {
+      if (attemptCount >= maxAttempts) {
+        questionDiv.textContent = "ניסית מספיק פעמים. אנא נסה שוב מאוחר יותר.";
+        return;
+      }
+
       contactTranscript = '';
       questionDiv.textContent = "למי תרצה להתקשר?";
       transcriptDiv.textContent = "";
@@ -116,9 +148,12 @@
       setTimeout(() => {
         if (recognition) recognition.stop();
 
-        if (!findMatchingContact(contactTranscript)) {
+        const match = findMatchingContact(contactTranscript);
+        if (!match) {
+          attemptCount++;
           playSound(false);
           questionDiv.textContent = "לא זוהה שם, נסה שוב.";
+          setTimeout(startContactRecognition, 2000); // נסה שוב אחרי 2 שניות
         }
       }, 8000);
     }
@@ -136,6 +171,11 @@
         }
         if (resultText.includes("טלפון")) {
           recognition.stop();
+          microphoneDiv.classList.add("active");  // הופך לירוק
+          attemptCount = 0; // איפוס הניסיונות בתחילת תהליך חדש
+          setTimeout(() => {
+            microphoneDiv.classList.remove("active"); // מחזיר לשחור אחרי זמן קצר
+          }, 3000);  // אחרי 3 שניות יחזור לשחור
           startContactRecognition();
         }
       };
