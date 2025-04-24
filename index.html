@@ -1,165 +1,62 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>זיהוי דיבור</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>זיהוי דיבור - טלפון</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       direction: rtl;
       text-align: center;
-      margin: 50px;
-      overflow: hidden;
+      margin-top: 100px;
     }
-    #question {
-      font-size: 26px;
-      margin-bottom: 10px;
-      color: #2c3e50;
+
+    #microphone img {
+      width: 120px;
+      transition: transform 0.3s ease-in-out;
     }
-    #transcript {
-      font-size: 20px;
-      color: #555;
-    }
-    #microphone {
-      font-size: 50px;
-      color: #333;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation: pulse 1.5s infinite;
-    }
+
     @keyframes pulse {
-      0% {
-        transform: translate(-50%, -50%) scale(1);
-      }
-      50% {
-        transform: translate(-50%, -50%) scale(1.2);
-      }
-      100% {
-        transform: translate(-50%, -50%) scale(1);
-      }
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
     }
-    .active {
-      color: green;
+
+    .animate {
+      animation: pulse 1.5s infinite;
     }
   </style>
 </head>
 <body>
-  <div id="question"></div>
-  <div id="transcript"></div>
-  <div id="microphone">&#127908;</div>
+
+  <h1>אמור "טלפון"</h1>
+  <div id="microphone">
+    <img id="micImage"
+      src="https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Mikrofono%20Icona%20Minimalista.png"
+      alt="מיקרופון">
+  </div>
 
   <script>
-    const questionDiv = document.getElementById("question");
-    const transcriptDiv = document.getElementById("transcript");
-    const microphoneDiv = document.getElementById("microphone");
+    const micImage = document.getElementById("micImage");
 
-    let recognition;
-    let contactTranscript = '';
-    let attemptCount = 0;
-    const maxAttempts = 3;
-
-    const contacts = ["נעם שינובר", "יונתן רזאל", "אייל גולן"];
-
-    function playSound(success) {
-      const audio = new Audio(success
-        ? "https://www.soundjay.com/button/beep-07.wav"
-        : "https://www.soundjay.com/button/beep-08b.wav");
-      audio.play();
+    function switchToActiveMic() {
+      micImage.src = "https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Ikona%20mikrofono%20blau.png";
+      micImage.classList.add("animate");
     }
 
-    function speakText(text) {
-      const synth = window.speechSynthesis;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "he-IL";
-      synth.speak(utterance);
-    }
-
-    function getLevenshteinDistance(a, b) {
-      const matrix = Array(b.length + 1).fill(null).map(() =>
-        Array(a.length + 1).fill(null));
-      for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
-      for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
-      for (let j = 1; j <= b.length; j++) {
-        for (let i = 1; i <= a.length; i++) {
-          const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
-          matrix[j][i] = Math.min(
-            matrix[j][i - 1] + 1,
-            matrix[j - 1][i] + 1,
-            matrix[j - 1][i - 1] + indicator
-          );
-        }
-      }
-      return matrix[b.length][a.length];
-    }
-
-    function findMatchingContact(text) {
-      text = text.replace(/[.,!?]/g, '').trim();
-      const words = text.split(/\s+/);
-      for (let i = 0; i < words.length - 1; i++) {
-        const candidate = `${words[i]} ${words[i + 1]}`;
-        for (const contact of contacts) {
-          const distance = getLevenshteinDistance(contact, candidate);
-          const threshold = Math.floor(contact.length * 0.2);
-          if (distance <= threshold) return contact;
-        }
-      }
-      return null;
+    function revertToDefaultMic() {
+      micImage.src = "https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Mikrofono%20Icona%20Minimalista.png";
+      micImage.classList.remove("animate");
     }
 
     function startContactRecognition() {
-      if (attemptCount >= maxAttempts) {
-        questionDiv.textContent = "ניסית מספיק פעמים. אנא נסה שוב מאוחר יותר.";
-        return;
-      }
-
-      contactTranscript = '';
-      questionDiv.textContent = "למי תרצה להתקשר?";
-      transcriptDiv.textContent = "";
-
-      playSound(true);
-      speakText("למי תרצה להתקשר?");
-
-      recognition = new webkitSpeechRecognition();
-      recognition.lang = "he-IL";
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onresult = (event) => {
-        let fullText = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          fullText += event.results[i][0].transcript;
-        }
-        contactTranscript = fullText;
-        transcriptDiv.textContent = contactTranscript;
-
-        const match = findMatchingContact(contactTranscript);
-        if (match) {
-          recognition.stop();
-          playSound(true);
-          questionDiv.textContent = `מתקשר ל: ${match}`;
-        }
-      };
-
-      recognition.start();
-
-      setTimeout(() => {
-        if (recognition) recognition.stop();
-
-        const match = findMatchingContact(contactTranscript);
-        if (!match) {
-          attemptCount++;
-          playSound(false);
-          questionDiv.textContent = "לא זוהה שם, נסה שוב.";
-          setTimeout(startContactRecognition, 2000); // נסה שוב אחרי 2 שניות
-        }
-      }, 8000);
+      // פונקציית דמה - כאן תוכל להכניס זיהוי שם איש קשר
+      console.log("מחפש שם איש קשר...");
     }
 
     function listenForPhoneKeyword() {
-      recognition = new webkitSpeechRecognition();
+      const recognition = new webkitSpeechRecognition();
       recognition.lang = "he-IL";
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -169,22 +66,25 @@
         for (let i = event.resultIndex; i < event.results.length; i++) {
           resultText += event.results[i][0].transcript;
         }
+
         if (resultText.includes("טלפון")) {
           recognition.stop();
-          microphoneDiv.classList.add("active");  // הופך לירוק
-          attemptCount = 0; // איפוס הניסיונות בתחילת תהליך חדש
-          setTimeout(() => {
-            microphoneDiv.classList.remove("active"); // מחזיר לשחור אחרי זמן קצר
-          }, 3000);  // אחרי 3 שניות יחזור לשחור
+          switchToActiveMic();
+
           startContactRecognition();
+
+          // חזרה לתמונה המקורית אחרי 8 שניות
+          setTimeout(() => {
+            revertToDefaultMic();
+          }, 8000);
         }
       };
 
       recognition.start();
     }
 
-    // Start listening for the "טלפון" keyword
     listenForPhoneKeyword();
   </script>
+
 </body>
 </html>
