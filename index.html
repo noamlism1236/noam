@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>זיהוי דיבור</title>
   <style>
     body {
@@ -22,12 +22,15 @@
       color: #555;
     }
     #microphone {
-      font-size: 50px;
-      color: #333;
+      width: 100px;
+      height: 100px;
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      transition: transform 0.3s ease-in-out;
+    }
+    .pulse {
       animation: pulse 1.5s infinite;
     }
     @keyframes pulse {
@@ -41,25 +44,25 @@
         transform: translate(-50%, -50%) scale(1);
       }
     }
-    .active {
-      color: green;
-    }
   </style>
 </head>
 <body>
   <div id="question"></div>
   <div id="transcript"></div>
-  <div id="microphone">&#127908;</div>
+  <img id="microphone" src="https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Mikrofono%20Icona%20Minimalista.png" alt="מיקרופון">
 
   <script>
     const questionDiv = document.getElementById("question");
     const transcriptDiv = document.getElementById("transcript");
-    const microphoneDiv = document.getElementById("microphone");
+    const micImage = document.getElementById("microphone");
 
     let recognition;
     let contactTranscript = '';
     let attemptCount = 0;
     const maxAttempts = 3;
+
+    const defaultImage = "https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Mikrofono%20Icona%20Minimalista.png";
+    const listeningImage = "https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Ikona%20mikrofono%20blau.png";
 
     const contacts = ["נעם שינובר", "יונתן רזאל", "אייל גולן"];
 
@@ -119,6 +122,9 @@
       questionDiv.textContent = "למי תרצה להתקשר?";
       transcriptDiv.textContent = "";
 
+      micImage.src = listeningImage;
+      micImage.classList.add("pulse");
+
       playSound(true);
       speakText("למי תרצה להתקשר?");
 
@@ -153,7 +159,11 @@
           attemptCount++;
           playSound(false);
           questionDiv.textContent = "לא זוהה שם, נסה שוב.";
-          setTimeout(startContactRecognition, 2000); // נסה שוב אחרי 2 שניות
+
+          micImage.src = defaultImage;
+          micImage.classList.remove("pulse");
+
+          setTimeout(startContactRecognition, 2000);
         }
       }, 8000);
     }
@@ -171,11 +181,7 @@
         }
         if (resultText.includes("טלפון")) {
           recognition.stop();
-          microphoneDiv.classList.add("active");  // הופך לירוק
-          attemptCount = 0; // איפוס הניסיונות בתחילת תהליך חדש
-          setTimeout(() => {
-            microphoneDiv.classList.remove("active"); // מחזיר לשחור אחרי זמן קצר
-          }, 3000);  // אחרי 3 שניות יחזור לשחור
+          attemptCount = 0;
           startContactRecognition();
         }
       };
@@ -183,7 +189,6 @@
       recognition.start();
     }
 
-    // Start listening for the "טלפון" keyword
     listenForPhoneKeyword();
   </script>
 </body>
