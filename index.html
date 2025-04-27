@@ -1,195 +1,48 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>זיהוי דיבור</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      direction: rtl;
-      text-align: center;
-      margin: 50px;
-      overflow: hidden;
-    }
-    #question {
-      font-size: 26px;
-      margin-bottom: 10px;
-      color: #2c3e50;
-    }
-    #transcript {
-      font-size: 20px;
-      color: #555;
-    }
-    #microphone {
-      width: 100px;
-      height: 100px;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      transition: transform 0.3s ease-in-out;
-    }
-    .pulse {
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% {
-        transform: translate(-50%, -50%) scale(1);
-      }
-      50% {
-        transform: translate(-50%, -50%) scale(1.2);
-      }
-      100% {
-        transform: translate(-50%, -50%) scale(1);
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>אפליקציית שיחות דיבור</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 30px;
+            direction: rtl;
+        }
+        button {
+            padding: 15px 30px;
+            margin: 15px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-  <div id="question"></div>
-  <div id="transcript"></div>
-  <img id="microphone" src="https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Mikrofono%20Icona%20Minimalista.png" alt="מיקרופון">
 
-  <script>
-    const questionDiv = document.getElementById("question");
-    const transcriptDiv = document.getElementById("transcript");
-    const micImage = document.getElementById("microphone");
+<h1>ברוך הבא</h1>
+<p>התחל דיבור או בצע שיחה:</p>
 
-    let recognition;
-    let contactTranscript = '';
-    let attemptCount = 0;
-    const maxAttempts = 3;
+<button onclick="startListening()">התחל להאזין</button><br>
+<button onclick="makeCall('0541234567')">התקשר ל-0541234567</button>
 
-    const defaultImage = "https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Mikrofono%20Icona%20Minimalista.png";
-    const listeningImage = "https://raw.githubusercontent.com/noamlism1236/noam/git-checkout--b-add-images/Ikona%20mikrofono%20blau.png";
-
-    const contacts = ["נעם שינובר", "יונתן רזאל", "אייל גולן"];
-
-    function playSound(success) {
-      const audio = new Audio(success
-        ? "https://www.soundjay.com/button/beep-07.wav"
-        : "https://www.soundjay.com/button/beep-08b.wav");
-      audio.play();
+<script>
+    function startListening() {
+        window.location.href = "action://startListening";
     }
 
-    function speakText(text) {
-      const synth = window.speechSynthesis;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "he-IL";
-      synth.speak(utterance);
+    function makeCall(phoneNumber) {
+        window.location.href = "action://makeCall?number=" + encodeURIComponent(phoneNumber);
     }
+</script>
 
-    function getLevenshteinDistance(a, b) {
-      const matrix = Array(b.length + 1).fill(null).map(() =>
-        Array(a.length + 1).fill(null));
-      for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
-      for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
-      for (let j = 1; j <= b.length; j++) {
-        for (let i = 1; i <= a.length; i++) {
-          const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
-          matrix[j][i] = Math.min(
-            matrix[j][i - 1] + 1,
-            matrix[j - 1][i] + 1,
-            matrix[j - 1][i - 1] + indicator
-          );
-        }
-      }
-      return matrix[b.length][a.length];
-    }
-
-    function findMatchingContact(text) {
-      text = text.replace(/[.,!?]/g, '').trim();
-      const words = text.split(/\s+/);
-      for (let i = 0; i < words.length - 1; i++) {
-        const candidate = `${words[i]} ${words[i + 1]}`;
-        for (const contact of contacts) {
-          const distance = getLevenshteinDistance(contact, candidate);
-          const threshold = Math.floor(contact.length * 0.2);
-          if (distance <= threshold) return contact;
-        }
-      }
-      return null;
-    }
-
-    function startContactRecognition() {
-      if (attemptCount >= maxAttempts) {
-        questionDiv.textContent = "ניסית מספיק פעמים. אנא נסה שוב מאוחר יותר.";
-        return;
-      }
-
-      contactTranscript = '';
-      questionDiv.textContent = "למי תרצה להתקשר?";
-      transcriptDiv.textContent = "";
-
-      micImage.src = listeningImage;
-      micImage.classList.add("pulse");
-
-      playSound(true);
-      speakText("למי תרצה להתקשר?");
-
-      recognition = new webkitSpeechRecognition();
-      recognition.lang = "he-IL";
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onresult = (event) => {
-        let fullText = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          fullText += event.results[i][0].transcript;
-        }
-        contactTranscript = fullText;
-        transcriptDiv.textContent = contactTranscript;
-
-        const match = findMatchingContact(contactTranscript);
-        if (match) {
-          recognition.stop();
-          playSound(true);
-          questionDiv.textContent = `מתקשר ל: ${match}`;
-        }
-      };
-
-      recognition.start();
-
-      setTimeout(() => {
-        if (recognition) recognition.stop();
-
-        const match = findMatchingContact(contactTranscript);
-        if (!match) {
-          attemptCount++;
-          playSound(false);
-          questionDiv.textContent = "לא זוהה שם, נסה שוב.";
-
-          micImage.src = defaultImage;
-          micImage.classList.remove("pulse");
-
-          setTimeout(startContactRecognition, 2000);
-        }
-      }, 8000);
-    }
-
-    function listenForPhoneKeyword() {
-      recognition = new webkitSpeechRecognition();
-      recognition.lang = "he-IL";
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onresult = (event) => {
-        let resultText = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          resultText += event.results[i][0].transcript;
-        }
-        if (resultText.includes("טלפון")) {
-          recognition.stop();
-          attemptCount = 0;
-          startContactRecognition();
-        }
-      };
-
-      recognition.start();
-    }
-
-    listenForPhoneKeyword();
-  </script>
 </body>
 </html>
